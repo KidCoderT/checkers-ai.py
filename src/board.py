@@ -9,11 +9,22 @@ class Board:
     @property
     def all_pieces(self):
         """Gets all the piece index on the board and returns
-        them as red, blue where red and blue are numpy arrays
-        containing the index of the red and blue pieces respectively"""
-        red = np.where(self.__board < 0)[0]
-        blue = np.where(self.__board > 0)[0]
-        return (red, blue)
+        them as an iterator where each element is a tuple
+        that is in the form of (piece, index)"""
+
+        indices = np.where(self.__board != 0)[0]
+        pieces = map(lambda x: (self.__board[x], x), indices)
+        return pieces
+
+    def piece(self, index: int) -> int:
+        """Gets a Piece from the board
+
+        Args:
+            index (int): the piece index
+
+        Returns: the piece
+        """
+        return self.__board[index]
 
     def move(self, old_index: int, new_index: int):
         """Moves Piece from old_index to new_index

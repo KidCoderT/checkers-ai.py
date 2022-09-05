@@ -23,10 +23,8 @@ def test_pieces_are_present(board):
     """Tests whether or not all the pieces in the board
     are present or not!
     """
-    red, blue = board.all_pieces
-
-    assert red.size == 12
-    assert blue.size == 12
+    pieces = list(board.all_pieces)
+    assert len(pieces) == 24
 
 
 def test_move_piece(board):

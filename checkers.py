@@ -66,13 +66,33 @@ background.blit(info_box, info_box_rect.topleft)
 PIECES_SCALE_FACTOR = 0.4
 RED_PIECE = kpt.load_and_scale("./assets/images/red.png", PIECES_SCALE_FACTOR)
 BLUE_PIECE = kpt.load_and_scale("./assets/images/blue.png", PIECES_SCALE_FACTOR)
-PIECE_HALF_WIDTH = RED_PIECE.get_width() / 2
-PIECE_HALF_HEIGHT = RED_PIECE.get_height() / 2
+
+
+def piece_img(number: int):
+    """Gets the Image for a piece
+    based on the piece value
+
+    Args:
+        number (int): the piece value
+    Raises:
+        ValueError: when the number is 0
+
+    Returns:
+        pygame.surface.Surface: the piece image
+    """
+    img = RED_PIECE if number > 0 else BLUE_PIECE
+    if number == 0:
+        raise ValueError("Number must not be zero!!")
+    return img
+
 
 clock = pygame.time.Clock()
+active_index: int | None = None
+active_piece: int = 0
 board = Board()
 
 while True:
+    mx, my = pygame.mouse.get_pos()
     screen.blit(background, (0, 0))
 
     for event in pygame.event.get():
@@ -80,25 +100,62 @@ while True:
             pygame.quit()
             sys.exit()
 
-    red_indices, blue_indices = board.all_pieces
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            x = mx - BOARD_OFFSET
+            y = my - BOARD_OFFSET
 
-    for index in red_indices:
+            is_x_okay = 0 <= x <= BOARD_SIZE
+            is_y_okay = 0 <= y <= BOARD_SIZE
+
+            index = (y // CELL_SIZE) * 8 + (x // CELL_SIZE)
+
+            if 0 <= index < 64 and is_x_okay and is_y_okay:
+                active_piece = board.piece(index)
+                active_index = index
+
+        if event.type == pygame.MOUSEBUTTONUP:
+            if active_index is not None:
+                x = mx - BOARD_OFFSET
+                y = my - BOARD_OFFSET
+
+                is_x_okay = 0 <= x <= BOARD_SIZE
+                is_y_okay = 0 <= y <= BOARD_SIZE
+
+                index = (y // CELL_SIZE) * 8 + (x // CELL_SIZE)
+
+                if (
+                    0 <= index < 64
+                    and is_x_okay
+                    and is_y_okay
+                    and board.piece(index) == 0
+                ):
+                    board.move(active_index, index)
+
+                active_index = None
+
+    pieces = board.all_pieces
+
+    for (piece, index) in pieces:
+        if index == active_index:
+            continue
+
         i = (index % 8) + 0.5
         j = (index // 8) + 0.5
 
-        x = BOARD_OFFSET + i * CELL_SIZE - PIECE_HALF_WIDTH
-        y = BOARD_OFFSET + j * CELL_SIZE - PIECE_HALF_HEIGHT
+        x = BOARD_OFFSET + i * CELL_SIZE
+        y = BOARD_OFFSET + j * CELL_SIZE
 
-        screen.blit(RED_PIECE, (x, y))
+        img = piece_img(piece)
+        x -= img.get_width() / 2
+        y -= img.get_height() / 2
 
-    for index in blue_indices:
-        i = (index % 8) + 0.5
-        j = (index // 8) + 0.5
+        screen.blit(img, (x, y))
 
-        x = BOARD_OFFSET + i * CELL_SIZE - PIECE_HALF_WIDTH
-        y = BOARD_OFFSET + j * CELL_SIZE - PIECE_HALF_HEIGHT
-
-        screen.blit(BLUE_PIECE, (x, y))
+    if active_index is not None:
+        img = piece_img(active_piece)
+        x = mx - img.get_width() / 2
+        y = my - img.get_height() / 2
+        screen.blit(img, (x, y))
 
     pygame.display.update()
     clock.tick(60)
