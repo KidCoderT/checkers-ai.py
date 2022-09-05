@@ -2,7 +2,8 @@
 
 import sys
 import pygame
-from utils import FontManager
+import kct_pygame_tools as kpt
+from src.board import Board
 
 pygame.init()
 
@@ -62,7 +63,14 @@ pygame.draw.rect(
 info_box = pygame.image.load("./assets/images/info_section.png")
 background.blit(info_box, info_box_rect.topleft)
 
+PIECES_SCALE_FACTOR = 0.4
+RED_PIECE = kpt.load_and_scale("./assets/images/red.png", PIECES_SCALE_FACTOR)
+BLUE_PIECE = kpt.load_and_scale("./assets/images/blue.png", PIECES_SCALE_FACTOR)
+PIECE_HALF_WIDTH = RED_PIECE.get_width() / 2
+PIECE_HALF_HEIGHT = RED_PIECE.get_height() / 2
+
 clock = pygame.time.Clock()
+board = Board()
 
 while True:
     screen.blit(background, (0, 0))
@@ -71,6 +79,26 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+
+    red_indices, blue_indices = board.all_pieces
+
+    for index in red_indices:
+        i = (index % 8) + 0.5
+        j = (index // 8) + 0.5
+
+        x = BOARD_OFFSET + i * CELL_SIZE - PIECE_HALF_WIDTH
+        y = BOARD_OFFSET + j * CELL_SIZE - PIECE_HALF_HEIGHT
+
+        screen.blit(RED_PIECE, (x, y))
+
+    for index in blue_indices:
+        i = (index % 8) + 0.5
+        j = (index // 8) + 0.5
+
+        x = BOARD_OFFSET + i * CELL_SIZE - PIECE_HALF_WIDTH
+        y = BOARD_OFFSET + j * CELL_SIZE - PIECE_HALF_HEIGHT
+
+        screen.blit(BLUE_PIECE, (x, y))
 
     pygame.display.update()
     clock.tick(60)
