@@ -106,7 +106,7 @@ def screen_shake(_shake_amount):
 clock = pygame.time.Clock()
 active_index: int | None = None
 active_piece: int = 0
-game = Game()
+game = Game(True, True)
 
 screen_shaking = False
 shake_timer = pygame.time.get_ticks()
@@ -148,8 +148,19 @@ while True:
 
                 piece = game.board.piece(index)
                 if piece != 0:
-                    active_piece = game.board.piece(index)
-                    active_index = index
+
+                    if piece not in game.board.current_side.value:
+                        screen_shake(500)
+
+                    elif piece < 0 and game.red is None:
+                        screen_shake(500)
+
+                    elif piece > 0 and game.blue is None:
+                        screen_shake(500)
+
+                    else:
+                        active_piece = game.board.piece(index)
+                        active_index = index
                 # else:
                 #     screen_shake(500)
 
@@ -166,18 +177,25 @@ while True:
                 if game.should_inverse_board:
                     index = (7 - (y // CELL_SIZE)) * 8 + (7 - (x // CELL_SIZE))
 
-                if (
-                    0 <= index < 64
-                    and is_x_okay
-                    and is_y_okay
-                    and game.board.get_notation(index) is not None
-                    and game.board.piece(index) == 0
-                ):
-                    game.board.move(active_index, index)
-                    color = "r" if game.board.piece(index) < 1 else "b"
-                    last_move_notation = color = str(game.board.get_notation(index))
-                else:
-                    screen_shake(500)
+                if active_index != index:
+                    if (
+                        0 <= index < 64
+                        and is_x_okay
+                        and is_y_okay
+                        and game.board.get_notation(index) is not None
+                        and game.board.piece(index) == 0
+                    ):
+                        try:
+                            move_index = game.find_move_index(active_index, index)
+                            game.play_move(move_index)
+                            color = "r" if game.board.piece(index) < 1 else "b"
+                            last_move_notation = color = str(
+                                game.board.get_notation(index)
+                            )
+                        except (ValueError, Exception):
+                            screen_shake(500)
+                    else:
+                        screen_shake(500)
 
                 active_index = None
 
@@ -185,6 +203,7 @@ while True:
     pieces = game.board.all_pieces
 
     if last_move is not None:
+
         for index in last_move:
             i = index % 8
             j = index // 8
@@ -220,6 +239,19 @@ while True:
 
     if active_index is not None:
         piece_image = get_piece_image(active_piece)
+        possible_moves = filter(lambda move: move.start == active_index, game.moves)
+
+        for move in possible_moves:
+            i = BOARD_OFFSET + (move.end % 8) * CELL_SIZE
+            j = BOARD_OFFSET + (move.end // 8) * CELL_SIZE
+
+            pygame.draw.rect(
+                screen,
+                (246, 206, 42),
+                pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
+                6,
+            )
+
         x = mx - piece_image.get_width() / 2
         y = my - piece_image.get_height() / 2
         screen.blit(piece_image, (x, y))

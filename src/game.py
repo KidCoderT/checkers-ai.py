@@ -15,13 +15,30 @@ class Game:
         self.red = red
         self.blue = blue
 
-        if self.red is not None and self.blue is not None:
-            raise Exception("Red and Blue Both cannot be controlled by the mouse")
-
-        self.should_inverse_board = red is not None
-        self.mouse_allowed = xor(self.red is not None, self.blue is not None)
+        self.should_inverse_board = blue is None and red is not None
+        self.mouse_allowed = self.red is not None or self.blue is not None
 
     def play_move(self, index: int):
         move = self.moves[index]
         move.play(self.board)
         self.moves = generate_moves(self.board)
+
+    def find_move_index(self, start: int, end: int) -> int:
+        """Find the index for the  move based on the start and end
+        this is possible only because all the moves are unique
+
+        Args:
+            start (int): the start index
+            end (int): the end index
+
+        Raises:
+            Exception: this is when the position is not there
+
+        Returns:
+            int: the index of the move in the moves list
+        """
+        for i, move in enumerate(self.moves):
+            if move.start == start and move.end == end:
+                return i
+
+        raise Exception(f"Move not Present with start and end: {(start, end)}")

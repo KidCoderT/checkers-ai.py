@@ -51,36 +51,46 @@ class Move:
 
 
 def generate_sliding_moves(piece: int, start: int, board: Board) -> list[Move]:
+    """Generate all the sliding moves for a piece
+
+    Args:
+        piece (int): the piece
+        start (int): the start position
+        board (Board): the board where the piece is present
+
+    Returns:
+        list[Move]: the number of moves possible by the piece
+    """
     is_king = piece % 2 == 0
     move = []
 
     start_direction_index = 0
-    end_direction_index = -1
+    end_direction_index = 4
 
     if is_king:
-        end_direction_index = -1
-
+        end_direction_index = 4
     elif piece < 0:
         end_direction_index = 2
-
     else:
         start_direction_index = 2
 
     for offset in range(start_direction_index, end_direction_index):
-        for n in range(NUM_SQUARES_TO_EDGE[start][offset]):
-            target_square = start + DIRECTIONAL_OFFSET[offset] * (n + 1)
+        if NUM_SQUARES_TO_EDGE[start][offset] > 0:
+            target_square = start + DIRECTIONAL_OFFSET[offset]
             target_contains_piece = board.piece(target_square) != 0
 
             if target_contains_piece:
-                break
+                continue
 
-            move.append(Move(piece, start, target_square, []))
-            break
+            new_move = Move(piece, start, target_square, [])
+            move.append(new_move)
 
     return move
 
 
-def generate_moves(board: Board) -> list[Move]:
+def generate_moves(
+    board: Board, only_sliding=False, only_attacking=False
+) -> list[Move]:
     """Generate all the possible moves for
     all the pieces on the board
     and returns a list of moves
@@ -93,12 +103,30 @@ def generate_moves(board: Board) -> list[Move]:
     """
     moves: list[Move] = []
 
-    for start in range(64):
-        piece = board.piece(start)
+    if only_sliding:
+        should_generate_sliding_move = True
+        should_generate_attacking_move = False
+
+    elif only_attacking:
+        should_generate_sliding_move = False
+        should_generate_attacking_move = True
+
+    else:
+        should_generate_sliding_move = True
+        should_generate_attacking_move = True
+
+    pieces = board.all_pieces
+    for (piece, start) in pieces:
         if piece in board.current_side.value:
-            sliding_moves = generate_sliding_moves(piece, start, board)
-            # attacking_moves = generate_attacking_moves(piece, start, board)
+
+            sliding_moves = []
+            if should_generate_sliding_move:
+                sliding_moves = generate_sliding_moves(piece, start, board)
+
             attacking_moves = []
+            if should_generate_attacking_move:
+                # attacking_moves = generate_attacking_moves(piece, start, board)
+                attacking_moves = []
 
             moves = moves + sliding_moves + attacking_moves
 
