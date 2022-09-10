@@ -1,11 +1,16 @@
-# pylint: disable=no-member
+# pylint: disable=no-member, not-an-iterable
 
 import sys
 import pygame
+from random import randint
 import kct_pygame_tools as kpt
-from src.board import Board
+from src.game import Game
 
-pygame.init()
+num_pass, num_fail = pygame.init()
+
+if num_fail > 0:
+    print("There is some Error with pygame!")
+    sys.exit()
 
 BOARD_OFFSET = 30
 BOARD_SIZE = 640
@@ -16,8 +21,9 @@ width, height = 1200, BOARD_SIZE + BOARD_OFFSET * 2
 pygame.display.set_caption("Checker AI")
 screen = pygame.display.set_mode((width, height))
 
+BG_COLOR = pygame.Color("#F4E7C6")
 background = pygame.Surface((width, height))
-background.fill(pygame.Color("#F4E7C6"))
+background.fill(BG_COLOR)
 
 pygame.draw.rect(
     background,
@@ -67,33 +73,59 @@ PIECES_SCALE_FACTOR = 0.4
 RED_PIECE = kpt.load_and_scale("./assets/images/red.png", PIECES_SCALE_FACTOR)
 BLUE_PIECE = kpt.load_and_scale("./assets/images/blue.png", PIECES_SCALE_FACTOR)
 
+MOVE_SQUARE = pygame.Surface((CELL_SIZE, CELL_SIZE))
+MOVE_SQUARE.fill((255, 255, 255))
+MOVE_SQUARE.set_alpha(50)
 
-def piece_img(number: int):
+
+def get_piece_image(piece_value: int):
     """Gets the Image for a piece
     based on the piece value
 
     Args:
-        number (int): the piece value
+        piece_value (int): the piece value
     Raises:
-        ValueError: when the number is 0
+        ValueError: when the piece_value is 0
 
     Returns:
         pygame.surface.Surface: the piece image
     """
-    img = RED_PIECE if number > 0 else BLUE_PIECE
-    if number == 0:
-        raise ValueError("Number must not be zero!!")
-    return img
+    image = RED_PIECE if piece_value < 0 else BLUE_PIECE
+    if piece_value == 0:
+        raise ValueError("piece_value must not be zero!!")
+    return image
+
+
+def screen_shake(_shake_amount):
+    global shake_amount, shake_timer, screen_shaking
+    screen_shaking = True
+    shake_timer = pygame.time.get_ticks()
+    shake_amount = _shake_amount
 
 
 clock = pygame.time.Clock()
 active_index: int | None = None
 active_piece: int = 0
-board = Board()
+game = Game()
+
+screen_shaking = False
+shake_timer = pygame.time.get_ticks()
+shake_amount = 0
+
+last_move_notation = None
 
 while True:
     mx, my = pygame.mouse.get_pos()
-    screen.blit(background, (0, 0))
+    screen.fill(BG_COLOR)
+
+    if screen_shaking:
+        screen.blit(background, (randint(-8, 8), randint(-8, 8)))
+
+        if pygame.time.get_ticks() - shake_timer > shake_amount:
+            screen_shaking = False
+
+    else:
+        screen.blit(background, (0, 0))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -109,9 +141,17 @@ while True:
 
             index = (y // CELL_SIZE) * 8 + (x // CELL_SIZE)
 
+            if game.should_inverse_board:
+                index = (7 - (y // CELL_SIZE)) * 8 + (7 - (x // CELL_SIZE))
+
             if 0 <= index < 64 and is_x_okay and is_y_okay:
-                active_piece = board.piece(index)
-                active_index = index
+
+                piece = game.board.piece(index)
+                if piece != 0:
+                    active_piece = game.board.piece(index)
+                    active_index = index
+                # else:
+                #     screen_shake(500)
 
         if event.type == pygame.MOUSEBUTTONUP:
             if active_index is not None:
@@ -123,17 +163,40 @@ while True:
 
                 index = (y // CELL_SIZE) * 8 + (x // CELL_SIZE)
 
+                if game.should_inverse_board:
+                    index = (7 - (y // CELL_SIZE)) * 8 + (7 - (x // CELL_SIZE))
+
                 if (
                     0 <= index < 64
                     and is_x_okay
                     and is_y_okay
-                    and board.piece(index) == 0
+                    and game.board.get_notation(index) is not None
+                    and game.board.piece(index) == 0
                 ):
-                    board.move(active_index, index)
+                    game.board.move(active_index, index)
+                    color = "r" if game.board.piece(index) < 1 else "b"
+                    last_move_notation = color = str(game.board.get_notation(index))
+                else:
+                    screen_shake(500)
 
                 active_index = None
 
-    pieces = board.all_pieces
+    last_move = game.board.last_move
+    pieces = game.board.all_pieces
+
+    if last_move is not None:
+        for index in last_move:
+            i = index % 8
+            j = index // 8
+
+            if game.should_inverse_board:
+                i = 7 - i
+                j = 7 - j
+
+            x = BOARD_OFFSET + i * CELL_SIZE
+            y = BOARD_OFFSET + j * CELL_SIZE
+
+            screen.blit(MOVE_SQUARE, (x, y))
 
     for (piece, index) in pieces:
         if index == active_index:
@@ -142,20 +205,24 @@ while True:
         i = (index % 8) + 0.5
         j = (index // 8) + 0.5
 
+        if game.should_inverse_board:
+            i = 8 - i
+            j = 8 - j
+
         x = BOARD_OFFSET + i * CELL_SIZE
         y = BOARD_OFFSET + j * CELL_SIZE
 
-        img = piece_img(piece)
-        x -= img.get_width() / 2
-        y -= img.get_height() / 2
+        piece_image = get_piece_image(piece)
+        x -= piece_image.get_width() / 2
+        y -= piece_image.get_height() / 2
 
-        screen.blit(img, (x, y))
+        screen.blit(piece_image, (x, y))
 
     if active_index is not None:
-        img = piece_img(active_piece)
-        x = mx - img.get_width() / 2
-        y = my - img.get_height() / 2
-        screen.blit(img, (x, y))
+        piece_image = get_piece_image(active_piece)
+        x = mx - piece_image.get_width() / 2
+        y = my - piece_image.get_height() / 2
+        screen.blit(piece_image, (x, y))
 
     pygame.display.update()
     clock.tick(60)

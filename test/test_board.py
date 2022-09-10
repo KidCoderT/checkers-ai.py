@@ -37,13 +37,48 @@ def test_move_piece(board):
     """
     board.move(10, 28)
     board.move(49, 35)
-    red, blue = board.all_pieces
+    pieces = map(lambda x: x[1], board.all_pieces)
 
-    assert 28 in red
-    assert 35 in blue
+    assert 28 in pieces
+    assert 35 in pieces
 
     with pytest.raises(IndexError, match="You cant move a piece to an occupied square"):
         board.move(1, 8)
 
     with pytest.raises(IndexError, match="You cant move a non existent piece!"):
         board.move(0, 25)
+
+
+@pytest.mark.parametrize(
+    "old_index, new_index", [(10, 28), (49, 35), (51, 37), (17, 26), (1, 29), (5, 26)]
+)
+def test_get_piece(board, old_index, new_index):
+    """Test the Get Piece Method"""
+
+    assert board.piece(old_index) != 0.0
+    assert board.piece(new_index) == 0.0
+
+    board.move(old_index, new_index)
+
+    assert board.piece(old_index) == 0.0
+    assert board.piece(new_index) != 0.0
+
+
+@pytest.mark.parametrize(
+    "move_data",
+    [
+        [(49, 35), (10, 28), (51, 37), (17, 26)],
+        [(49, 35), (10, 28)],
+        [(5, 26)],
+        [(10, 28), (49, 35), (1, 29), (51, 37), (17, 24), (5, 26)],
+    ],
+)
+def test_get_last_move(board, move_data):
+    """Test Last Method Works"""
+    assert board.last_move is None
+
+    for move in move_data:
+        board.move(*move)
+        assert board.last_move == move
+
+    assert board.last_move == move_data[-1]
