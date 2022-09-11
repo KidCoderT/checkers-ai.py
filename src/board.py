@@ -33,7 +33,7 @@ class Board:
                 index += 1
 
         self.__made_moves = []
-        self.__setup_pieces()
+        self.__default_arrange_pieces()
 
     @property
     def all_pieces(self):
@@ -83,7 +83,7 @@ class Board:
         else:
             self.current_side = self.PieceTypes.BLUE
 
-    def __setup_pieces(self):
+    def __default_arrange_pieces(self):
         """Sets up the board pieces"""
 
         # setup red pieces

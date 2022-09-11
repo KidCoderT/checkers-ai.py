@@ -33,7 +33,7 @@ class Move:
         self.is_killing_move = len(kill) > 0
         self.make_king = False
 
-        if abs(piece) % 2 == 0 and end // 8 in [0, 7]:
+        if abs(piece) % 2 != 0 and end // 8 in [0, 7]:
             self.make_king = True
 
     def play(self, board: Board):
@@ -48,6 +48,9 @@ class Move:
 
         if self.make_king:
             board.make_king(self.end)
+
+    def __str__(self):
+        return f"{self.start} -> {self.end} | making king - {self.make_king}"
 
 
 def generate_sliding_moves(piece: int, start: int, board: Board) -> list[Move]:
