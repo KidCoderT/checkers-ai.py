@@ -10,18 +10,21 @@ class Game:
         blue=None,
     ):
         self.board = Board()
-        self.moves: list[Move] = generate_moves(self.board)
+        self.moves: list[Move] = []
+        self.reset_correct_moves()
 
         self.red = red
         self.blue = blue
 
-        self.should_inverse_board = blue is None and red is not None
-        self.mouse_allowed = self.red is not None or self.blue is not None
-
     def play_move(self, index: int):
+        """Play a move on the Board
+
+        Args:
+            index (int): the index of the move
+        """
         move = self.moves[index]
         move.play(self.board)
-        self.moves = generate_moves(self.board)
+        self.reset_correct_moves()
 
     def find_move_index(self, start: int, end: int) -> int:
         """Find the index for the  move based on the start and end
@@ -42,3 +45,9 @@ class Game:
                 return i
 
         raise Exception(f"Move not Present with start and end: {(start, end)}")
+
+    def reset_correct_moves(self):
+        """Resets the game instances correct move
+        based on the position
+        """
+        self.moves = generate_moves(self.board)

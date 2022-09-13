@@ -91,9 +91,7 @@ def generate_sliding_moves(piece: int, start: int, board: Board) -> list[Move]:
     return move
 
 
-def generate_moves(
-    board: Board, only_sliding=False, only_attacking=False
-) -> list[Move]:
+def generate_moves(board: Board) -> list[Move]:
     """Generate all the possible moves for
     all the pieces on the board
     and returns a list of moves
@@ -104,33 +102,36 @@ def generate_moves(
     Returns:
         list[Move]: the moves
     """
-    moves: list[Move] = []
 
-    if only_sliding:
-        should_generate_sliding_move = True
-        should_generate_attacking_move = False
+    attacking_moves = []
+    max_kills = -100
 
-    elif only_attacking:
-        should_generate_sliding_move = False
-        should_generate_attacking_move = True
-
-    else:
-        should_generate_sliding_move = True
-        should_generate_attacking_move = True
+    sliding_moves = []
 
     pieces = board.all_pieces
     for (piece, start) in pieces:
         if piece in board.current_side.value:
 
-            sliding_moves = []
-            if should_generate_sliding_move:
-                sliding_moves = generate_sliding_moves(piece, start, board)
+            # piece_attack_moves = generate_attacking_moves(piece, start, board)
+            piece_attack_moves = []
 
-            attacking_moves = []
-            if should_generate_attacking_move:
-                # attacking_moves = generate_attacking_moves(piece, start, board)
-                attacking_moves = []
+            for move in piece_attack_moves:
+                if len(move.kill) > max_kills:
+                    attacking_moves = [move]
+                    max_kills = len(move.kill)
 
-            moves = moves + sliding_moves + attacking_moves
+                elif len(move.kill) == max_kills:
+                    attacking_moves.append(move)
 
-    return moves
+                else:
+                    continue
+
+            if len(attacking_moves) <= 0:
+                sliding_moves = sliding_moves + generate_sliding_moves(
+                    piece, start, board
+                )
+
+    if len(attacking_moves) <= 0:
+        return sliding_moves
+
+    return sliding_moves

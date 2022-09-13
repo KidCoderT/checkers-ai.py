@@ -107,6 +107,7 @@ clock = pygame.time.Clock()
 active_index: int | None = None
 active_piece: int = 0
 game = Game(True, True)
+should_inverse_board = game.blue is None and game.red is not None
 
 screen_shaking = False
 shake_timer = pygame.time.get_ticks()
@@ -141,7 +142,7 @@ while True:
 
             index = (y // CELL_SIZE) * 8 + (x // CELL_SIZE)
 
-            if game.should_inverse_board:
+            if should_inverse_board:
                 index = (7 - (y // CELL_SIZE)) * 8 + (7 - (x // CELL_SIZE))
 
             if 0 <= index < 64 and is_x_okay and is_y_okay:
@@ -174,7 +175,7 @@ while True:
 
                 index = (y // CELL_SIZE) * 8 + (x // CELL_SIZE)
 
-                if game.should_inverse_board:
+                if should_inverse_board:
                     index = (7 - (y // CELL_SIZE)) * 8 + (7 - (x // CELL_SIZE))
 
                 if active_index != index:
@@ -208,7 +209,7 @@ while True:
             i = index % 8
             j = index // 8
 
-            if game.should_inverse_board:
+            if should_inverse_board:
                 i = 7 - i
                 j = 7 - j
 
@@ -224,7 +225,7 @@ while True:
         i = (index % 8) + 0.5
         j = (index // 8) + 0.5
 
-        if game.should_inverse_board:
+        if should_inverse_board:
             i = 8 - i
             j = 8 - j
 
@@ -235,7 +236,11 @@ while True:
         x -= piece_image.get_width() / 2
         y -= piece_image.get_height() / 2
 
-        screen.blit(piece_image, (x, y))
+        if abs(piece) % 2 != 0:
+            screen.blit(piece_image, (x, y))
+        else:
+            screen.blit(piece_image, (x, y + 3))
+            screen.blit(piece_image, (x, y - 3))
 
     if active_index is not None:
         piece_image = get_piece_image(active_piece)
@@ -254,7 +259,12 @@ while True:
 
         x = mx - piece_image.get_width() / 2
         y = my - piece_image.get_height() / 2
-        screen.blit(piece_image, (x, y))
+
+        if abs(active_piece) % 2 != 0:
+            screen.blit(piece_image, (x, y))
+        else:
+            screen.blit(piece_image, (x, y + 3))
+            screen.blit(piece_image, (x, y - 3))
 
     pygame.display.update()
     clock.tick(60)
