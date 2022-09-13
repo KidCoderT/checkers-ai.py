@@ -1,6 +1,6 @@
 import pytest
 from src.board import Board
-from src.move import Move, generate_moves, generate_sliding_moves
+from src.move import Move, generate_moves
 
 # pylint: disable=redefined-outer-name
 

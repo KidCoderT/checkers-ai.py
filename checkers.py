@@ -1,4 +1,4 @@
-# pylint: disable=no-member, not-an-iterable
+# pylint: disable=no-member, not-an-iterable, invalid-name
 
 import sys
 import pygame

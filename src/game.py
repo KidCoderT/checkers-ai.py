@@ -1,9 +1,10 @@
-from operator import xor
 from .board import Board
 from .move import Move, generate_moves
 
 
 class Game:
+    """The Game class for a checkers game"""
+
     def __init__(
         self,
         red=None,
