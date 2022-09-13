@@ -36,7 +36,7 @@ class Game:
             end (int): the end index
 
         Raises:
-            Exception: this is when the position is not there
+            ValueError: this is when the position is not there
 
         Returns:
             int: the index of the move in the moves list
@@ -45,7 +45,7 @@ class Game:
             if move.start == start and move.end == end:
                 return i
 
-        raise Exception(f"Move not Present with start and end: {(start, end)}")
+        raise ValueError(f"Move not Present with start and end: {(start, end)}")
 
     def reset_correct_moves(self):
         """Resets the game instances correct move

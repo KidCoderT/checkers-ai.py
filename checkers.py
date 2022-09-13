@@ -2,7 +2,6 @@
 
 import sys
 import pygame
-from random import randint
 import kct_pygame_tools as kpt
 from src.game import Game
 
@@ -96,37 +95,18 @@ def get_piece_image(piece_value: int):
     return image
 
 
-def screen_shake(_shake_amount):
-    global shake_amount, shake_timer, screen_shaking
-    screen_shaking = True
-    shake_timer = pygame.time.get_ticks()
-    shake_amount = _shake_amount
-
-
 clock = pygame.time.Clock()
 active_index: int | None = None
 active_piece: int = 0
-game = Game(True, True)
+game = Game(True)
 should_inverse_board = game.blue is None and game.red is not None
-
-screen_shaking = False
-shake_timer = pygame.time.get_ticks()
-shake_amount = 0
 
 last_move_notation = None
 
 while True:
     mx, my = pygame.mouse.get_pos()
     screen.fill(BG_COLOR)
-
-    if screen_shaking:
-        screen.blit(background, (randint(-8, 8), randint(-8, 8)))
-
-        if pygame.time.get_ticks() - shake_timer > shake_amount:
-            screen_shaking = False
-
-    else:
-        screen.blit(background, (0, 0))
+    screen.blit(background, (0, 0))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -150,16 +130,12 @@ while True:
                 piece = game.board.piece(index)
                 if piece != 0:
 
-                    if piece not in game.board.current_side.value:
-                        screen_shake(500)
-
-                    elif piece < 0 and game.red is None:
-                        screen_shake(500)
-
-                    elif piece > 0 and game.blue is None:
-                        screen_shake(500)
-
-                    else:
+                    if piece in game.board.current_side.value and (
+                        piece < 0
+                        and game.red is not None
+                        or piece > 0
+                        and game.blue is not None
+                    ):
                         active_piece = game.board.piece(index)
                         active_index = index
                 # else:
@@ -193,10 +169,8 @@ while True:
                             last_move_notation = color = str(
                                 game.board.get_notation(index)
                             )
-                        except (ValueError, Exception):
-                            screen_shake(500)
-                    else:
-                        screen_shake(500)
+                        except ValueError:
+                            pass
 
                 active_index = None
 
