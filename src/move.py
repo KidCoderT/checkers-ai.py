@@ -1,3 +1,4 @@
+from copy import copy
 from .board import Board
 
 NUM_SQUARES_TO_EDGE = [(0, 0, 0, 0) for _ in range(64)]
@@ -19,13 +20,15 @@ for row in range(8):
             min(dist_south, dist_west),
         )
 
+        del index
+
 
 class Move:
     """This contains data for any and all moves
     and also can play the move on the board
     """
 
-    def __init__(self, piece: int, start: int, end: int, kill: list[int]):
+    def __init__(self, piece: int, start: int, end: int, kill: list[int] = []):
         self.start = start
         self.end = end
         self.kill = kill
@@ -91,6 +94,74 @@ def generate_sliding_moves(piece: int, start: int, board: Board) -> list[Move]:
     return move
 
 
+def generate_attacking_moves(piece: int, start: int, board: Board) -> list[Move]:
+    """Generate all the sliding moves for a piece
+
+    Args:
+        piece (int): the piece
+        start (int): the start position
+        board (Board): the board where the piece is present
+
+    Returns:
+        list[Move]: the number of moves possible by the piece
+    """
+    # TODO: Make Faster
+    is_king = piece % 2 == 0
+    move = []
+
+    opposite_piece = (
+        Board.PieceTypes.RED
+        if piece in Board.PieceTypes.BLUE.value
+        else Board.PieceTypes.BLUE
+    )
+
+    start_direction_index = 0
+    end_direction_index = 4
+
+    if is_king:
+        end_direction_index = 4
+    elif piece < 0:
+        end_direction_index = 2
+    else:
+        start_direction_index = 2
+
+    offsets = range(start_direction_index, end_direction_index)
+
+    def attack(piece: int, start: int, current: int, kills: list[int], board: Board):
+        # 1. get all the possible kills
+        kill_positions = []
+
+        for offset in offsets:
+            if NUM_SQUARES_TO_EDGE[current][offset] >= 2:
+                kill_piece = current + DIRECTIONAL_OFFSET[offset]
+                final_index = current + DIRECTIONAL_OFFSET[offset] * 2
+
+                if (
+                    board.piece(kill_piece) in opposite_piece.value
+                    and board.piece(final_index) == 0
+                ):
+                    kill_positions.append((kill_piece, final_index))
+
+        # 2. if no kill possible break recursion
+        if len(kill_positions) == 0:
+            return
+
+        # 3. for ever kill
+        #   - create a new move
+        #   - create a recursion from the current position
+
+        for kill in kill_positions:
+            kills_list = kills + [kill[0]]
+            new_move = Move(piece, start, kill[1], kills_list)
+            move.append(new_move)
+
+            attack(piece, start, kill[1], kills_list, board)
+
+    attack(piece, start, start, [], copy(board))
+
+    return move
+
+
 def generate_moves(board: Board) -> list[Move]:
     """Generate all the possible moves for
     all the pieces on the board
@@ -112,8 +183,7 @@ def generate_moves(board: Board) -> list[Move]:
     for (piece, start) in pieces:
         if piece in board.current_side.value:
 
-            # piece_attack_moves = generate_attacking_moves(piece, start, board)
-            piece_attack_moves = []
+            piece_attack_moves = generate_attacking_moves(piece, start, board)
 
             for move in piece_attack_moves:
                 if len(move.kill) > max_kills:
@@ -134,4 +204,4 @@ def generate_moves(board: Board) -> list[Move]:
     if len(attacking_moves) <= 0:
         return sliding_moves
 
-    return sliding_moves
+    return attacking_moves

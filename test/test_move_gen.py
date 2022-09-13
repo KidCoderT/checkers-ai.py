@@ -24,5 +24,5 @@ def test_sliding_moves_generation(board):
     """Tests whether or not the sliding moves
     are being generated or not
     """
-    moves = generate_moves(board, only_sliding=True)
+    moves = generate_moves(board)
     assert len(moves) > 0
