@@ -232,6 +232,17 @@ while True:
                 6,
             )
 
+            for pos in move.move_through + [move.start]:
+                i = BOARD_OFFSET + (pos % 8) * CELL_SIZE
+                j = BOARD_OFFSET + (pos // 8) * CELL_SIZE
+
+                pygame.draw.rect(
+                    screen,
+                    pygame.Color("#F6CE2A"),
+                    pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
+                    6,
+                )
+
             for attack_pos in move.kill:
                 i = BOARD_OFFSET + (attack_pos % 8) * CELL_SIZE
                 j = BOARD_OFFSET + (attack_pos // 8) * CELL_SIZE
@@ -251,6 +262,18 @@ while True:
         else:
             screen.blit(piece_image, (x, y + 3))
             screen.blit(piece_image, (x, y - 3))
+
+    else:
+        for pos in game.moves:
+            i = BOARD_OFFSET + (pos.start % 8) * CELL_SIZE
+            j = BOARD_OFFSET + (pos.start // 8) * CELL_SIZE
+
+            pygame.draw.rect(
+                screen,
+                pygame.Color("#F6CE2A"),
+                pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
+                6,
+            )
 
     pygame.display.update()
     clock.tick(60)

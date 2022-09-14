@@ -28,10 +28,18 @@ class Move:
     and also can play the move on the board
     """
 
-    def __init__(self, piece: int, start: int, end: int, kill: list[int] = []):
+    def __init__(
+        self,
+        piece: int,
+        start: int,
+        end: int,
+        kill: list[int] = [],
+        move_through: list[int] = [],
+    ):
         self.start = start
         self.end = end
         self.kill = kill
+        self.move_through = move_through
 
         self.is_killing_move = len(kill) > 0
         self.make_king = False
@@ -88,7 +96,7 @@ def generate_sliding_moves(piece: int, start: int, board: Board) -> list[Move]:
             if target_contains_piece:
                 continue
 
-            new_move = Move(piece, start, target_square, [])
+            new_move = Move(piece, start, target_square)
             move.append(new_move)
 
     return move
@@ -136,11 +144,11 @@ def generate_attacking_moves(piece: int, start: int, board: Board) -> list[Move]
                 board.piece(kill_piece) in opposite_piece.value
                 and board.piece(final_index) == 0
             ):
-                attack_positions.append((final_index, [kill_piece]))
+                attack_positions.append((final_index, [kill_piece], []))
 
     while len(attack_positions) > 0:
         attack = attack_positions.pop(0)
-        move.append(Move(piece, start, attack[0], attack[1]))
+        move.append(Move(piece, start, attack[0], attack[1], attack[2]))
 
         for offset in offsets:
             if NUM_SQUARES_TO_EDGE[attack[0]][offset] >= 2:
@@ -152,7 +160,13 @@ def generate_attacking_moves(piece: int, start: int, board: Board) -> list[Move]
                     and board.piece(final_index) == 0
                 ):
                     if attack[1][-1] != kill_piece:
-                        attack_positions.append((final_index, attack[1] + [kill_piece]))
+                        attack_positions.append(
+                            (
+                                final_index,
+                                attack[1] + [kill_piece],
+                                attack[2] + [attack[0]],
+                            )
+                        )
 
     return move
 
