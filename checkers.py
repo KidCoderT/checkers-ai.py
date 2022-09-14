@@ -72,9 +72,15 @@ PIECES_SCALE_FACTOR = 0.4
 RED_PIECE = kpt.load_and_scale("./assets/images/red.png", PIECES_SCALE_FACTOR)
 BLUE_PIECE = kpt.load_and_scale("./assets/images/blue.png", PIECES_SCALE_FACTOR)
 
+RED_WIN_BANNER = kpt.load_and_scale("./assets/images/Red Banner.png", 1)
+BLUE_WIN_BANNER = kpt.load_and_scale("./assets/images/Blue Banner.png", 1)
+
 MOVE_SQUARE = pygame.Surface((CELL_SIZE, CELL_SIZE))
 MOVE_SQUARE.fill((255, 255, 255))
 MOVE_SQUARE.set_alpha(50)
+
+BLACK_OVERLAY = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
+BLACK_OVERLAY.set_alpha(100)
 
 
 def get_piece_image(piece_value: int):
@@ -114,7 +120,7 @@ while True:
             pygame.quit()
             sys.exit()
 
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if game.is_playing and event.type == pygame.MOUSEBUTTONDOWN:
             x = mx - BOARD_OFFSET
             y = my - BOARD_OFFSET
 
@@ -142,7 +148,7 @@ while True:
                 # else:
                 #     screen_shake(500)
 
-        if event.type == pygame.MOUSEBUTTONUP:
+        if game.is_playing and event.type == pygame.MOUSEBUTTONUP:
             if active_index is not None:
                 x = mx - BOARD_OFFSET
                 y = my - BOARD_OFFSET
@@ -273,6 +279,20 @@ while True:
                 pygame.Color("#F6CE2A"),
                 pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
                 6,
+            )
+
+    if not game.is_playing and game.winner is not None:
+        screen.blit(BLACK_OVERLAY, (BOARD_OFFSET, BOARD_OFFSET))
+
+        if game.winner > 0:
+            screen.blit(
+                BLUE_WIN_BANNER,
+                (BOARD_OFFSET, (height / 2) - (BLUE_WIN_BANNER.get_height() / 2)),
+            )
+        else:
+            screen.blit(
+                RED_WIN_BANNER,
+                (BOARD_OFFSET, (height / 2) - (RED_WIN_BANNER.get_height() / 2)),
             )
 
     pygame.display.update()

@@ -8,6 +8,9 @@ class Game:
     def __init__(self, red=None, blue=None, board: None | list = None):
         self.board = Board(board)
         self.moves: list[Move] = []
+
+        self.is_playing = True
+        self.winner: None | int = None
         self.reset_correct_moves()
 
         self.red = red
@@ -21,8 +24,11 @@ class Game:
         """
         move = self.moves[index]
         move.play(self.board)
-        # print(self.board.board)
         self.reset_correct_moves()
+
+        if len(self.moves) == 0:
+            self.winner = self.board.current_side.value[0] * -1
+            self.is_playing = False
 
     def find_move_index(self, start: int, end: int) -> int:
         """Find the index for the  move based on the start and end
