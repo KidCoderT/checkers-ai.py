@@ -105,7 +105,6 @@ def generate_attacking_moves(piece: int, start: int, board: Board) -> list[Move]
     Returns:
         list[Move]: the number of moves possible by the piece
     """
-    # TODO: Make Faster
     is_king = piece % 2 == 0
     move = []
 
@@ -126,38 +125,33 @@ def generate_attacking_moves(piece: int, start: int, board: Board) -> list[Move]
         start_direction_index = 2
 
     offsets = range(start_direction_index, end_direction_index)
+    attack_positions = []  # current position, kill position, moved through position
 
-    def attack(piece: int, start: int, current: int, kills: list[int], board: Board):
-        # 1. get all the possible kills
-        kill_positions = []
+    for offset in offsets:
+        if NUM_SQUARES_TO_EDGE[start][offset] >= 2:
+            kill_piece = start + DIRECTIONAL_OFFSET[offset]
+            final_index = start + DIRECTIONAL_OFFSET[offset] * 2
+
+            if (
+                board.piece(kill_piece) in opposite_piece.value
+                and board.piece(final_index) == 0
+            ):
+                attack_positions.append((final_index, [kill_piece]))
+
+    while len(attack_positions) > 0:
+        attack = attack_positions.pop(0)
+        move.append(Move(piece, start, attack[0], attack[1]))
 
         for offset in offsets:
-            if NUM_SQUARES_TO_EDGE[current][offset] >= 2:
-                kill_piece = current + DIRECTIONAL_OFFSET[offset]
-                final_index = current + DIRECTIONAL_OFFSET[offset] * 2
+            if NUM_SQUARES_TO_EDGE[attack[0]][offset] >= 2:
+                kill_piece = attack[0] + DIRECTIONAL_OFFSET[offset]
+                final_index = attack[0] + DIRECTIONAL_OFFSET[offset] * 2
 
                 if (
                     board.piece(kill_piece) in opposite_piece.value
                     and board.piece(final_index) == 0
                 ):
-                    kill_positions.append((kill_piece, final_index))
-
-        # 2. if no kill possible break recursion
-        if len(kill_positions) == 0:
-            return
-
-        # 3. for ever kill
-        #   - create a new move
-        #   - create a recursion from the current position
-
-        for kill in kill_positions:
-            kills_list = kills + [kill[0]]
-            new_move = Move(piece, start, kill[1], kills_list)
-            move.append(new_move)
-
-            attack(piece, start, kill[1], kills_list, board)
-
-    attack(piece, start, start, [], copy(board))
+                    attack_positions.append((final_index, attack[1] + [kill_piece]))
 
     return move
 

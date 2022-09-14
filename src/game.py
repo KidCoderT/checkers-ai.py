@@ -5,12 +5,8 @@ from .move import Move, generate_moves
 class Game:
     """The Game class for a checkers game"""
 
-    def __init__(
-        self,
-        red=None,
-        blue=None,
-    ):
-        self.board = Board()
+    def __init__(self, red=None, blue=None, board: None | list = None):
+        self.board = Board(board)
         self.moves: list[Move] = []
         self.reset_correct_moves()
 
@@ -51,4 +47,8 @@ class Game:
         """Resets the game instances correct move
         based on the position
         """
-        self.moves = generate_moves(self.board)
+        try:
+            self.moves = generate_moves(self.board)
+        except Exception as e:
+            print(self.board.board)
+            raise e

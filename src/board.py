@@ -11,8 +11,14 @@ class Board:
         RED = (-1, -2)
         BLUE = (1, 2)
 
-    def __init__(self):
-        self.__board = np.zeros(64, dtype=np.dtype(int))
+    def __init__(self, board):
+        if board is None:
+            self.__board = np.zeros(64, dtype=np.dtype(int))
+            self.__default_arrange_pieces()
+
+        else:
+            self.__board = np.array(board, dtype=np.dtype(int))
+
         self.position_notations = []
         self.current_side = self.PieceTypes.BLUE
 
@@ -33,7 +39,6 @@ class Board:
                 index += 1
 
         self.__made_moves = []
-        self.__default_arrange_pieces()
 
     @property
     def all_pieces(self):
@@ -175,3 +180,12 @@ class Board:
             self.__board[last_move[2]] = self.__board[last_move[2]] // 2
 
         self.move(*last_move[:2])
+
+    @property
+    def board(self):
+        """Gives the Board Representation
+
+        Returns:
+            numpy array
+        """
+        return self.__board

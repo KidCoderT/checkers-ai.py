@@ -98,7 +98,8 @@ def get_piece_image(piece_value: int):
 clock = pygame.time.Clock()
 active_index: int | None = None
 active_piece: int = 0
-game = Game(True)
+board_representation = None
+game = Game(True, True, board_representation)
 should_inverse_board = game.blue is None and game.red is not None
 
 last_move_notation = None
