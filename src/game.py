@@ -21,6 +21,7 @@ class Game:
         """
         move = self.moves[index]
         move.play(self.board)
+        # print(self.board.board)
         self.reset_correct_moves()
 
     def find_move_index(self, start: int, end: int) -> int:

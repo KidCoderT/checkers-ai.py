@@ -227,10 +227,21 @@ while True:
 
             pygame.draw.rect(
                 screen,
-                (246, 206, 42),
+                pygame.Color("#2AF63E"),
                 pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
                 6,
             )
+
+            for attack_pos in move.kill:
+                i = BOARD_OFFSET + (attack_pos % 8) * CELL_SIZE
+                j = BOARD_OFFSET + (attack_pos // 8) * CELL_SIZE
+
+                pygame.draw.rect(
+                    screen,
+                    pygame.Color("#F62A2A"),
+                    pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
+                    6,
+                )
 
         x = mx - piece_image.get_width() / 2
         y = my - piece_image.get_height() / 2

@@ -188,4 +188,4 @@ class Board:
         Returns:
             numpy array
         """
-        return self.__board
+        return self.__board.tolist()

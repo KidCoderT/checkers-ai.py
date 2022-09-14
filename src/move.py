@@ -151,7 +151,8 @@ def generate_attacking_moves(piece: int, start: int, board: Board) -> list[Move]
                     board.piece(kill_piece) in opposite_piece.value
                     and board.piece(final_index) == 0
                 ):
-                    attack_positions.append((final_index, attack[1] + [kill_piece]))
+                    if attack[1][-1] != kill_piece:
+                        attack_positions.append((final_index, attack[1] + [kill_piece]))
 
     return move
 
@@ -167,6 +168,8 @@ def generate_moves(board: Board) -> list[Move]:
     Returns:
         list[Move]: the moves
     """
+
+    # TODO: Add multiprocessing
 
     attacking_moves = []
     max_kills = -100
