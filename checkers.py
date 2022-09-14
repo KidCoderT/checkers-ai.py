@@ -74,6 +74,7 @@ BLUE_PIECE = kpt.load_and_scale("./assets/images/blue.png", PIECES_SCALE_FACTOR)
 
 RED_WIN_BANNER = kpt.load_and_scale("./assets/images/Red Banner.png", 1)
 BLUE_WIN_BANNER = kpt.load_and_scale("./assets/images/Blue Banner.png", 1)
+DRAW_BANNER = kpt.load_and_scale("./assets/images/Draw Banner.png", 1)
 
 MOVE_SQUARE = pygame.Surface((CELL_SIZE, CELL_SIZE))
 MOVE_SQUARE.fill((255, 255, 255))
@@ -281,18 +282,25 @@ while True:
                 6,
             )
 
-    if not game.is_playing and game.winner is not None:
+    if not game.is_playing:
         screen.blit(BLACK_OVERLAY, (BOARD_OFFSET, BOARD_OFFSET))
 
-        if game.winner > 0:
-            screen.blit(
-                BLUE_WIN_BANNER,
-                (BOARD_OFFSET, (height / 2) - (BLUE_WIN_BANNER.get_height() / 2)),
-            )
+        if game.winner is not None:
+            if game.winner > 0:
+                screen.blit(
+                    BLUE_WIN_BANNER,
+                    (BOARD_OFFSET, (height / 2) - (BLUE_WIN_BANNER.get_height() / 2)),
+                )
+            else:
+                screen.blit(
+                    RED_WIN_BANNER,
+                    (BOARD_OFFSET, (height / 2) - (RED_WIN_BANNER.get_height() / 2)),
+                )
+
         else:
             screen.blit(
-                RED_WIN_BANNER,
-                (BOARD_OFFSET, (height / 2) - (RED_WIN_BANNER.get_height() / 2)),
+                DRAW_BANNER,
+                (BOARD_OFFSET, (height / 2) - (DRAW_BANNER.get_height() / 2)),
             )
 
     pygame.display.update()

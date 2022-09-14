@@ -189,3 +189,16 @@ class Board:
             numpy array
         """
         return self.__board.tolist()
+
+    def is_draw(self) -> bool:
+        """Check wether or not the board state
+        is draw or not
+
+        Returns:
+            bool: wether or not it is a draw
+        """
+        pieces = list(self.all_pieces)
+        red = len(list(filter(lambda piece: piece[0] < 0, pieces)))
+        blue = len(pieces) - red
+
+        return red == blue == 1

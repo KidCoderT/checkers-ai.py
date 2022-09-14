@@ -25,9 +25,14 @@ class Game:
         move = self.moves[index]
         move.play(self.board)
         self.reset_correct_moves()
+        is_draw = self.board.is_draw()
 
-        if len(self.moves) == 0:
-            self.winner = self.board.current_side.value[0] * -1
+        if len(self.moves) == 0 or is_draw:
+            if is_draw:
+                self.winner = None
+            else:
+                self.winner = self.board.current_side.value[0] * -1
+
             self.is_playing = False
 
     def find_move_index(self, start: int, end: int) -> int:
