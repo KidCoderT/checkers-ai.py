@@ -1,4 +1,4 @@
-from copy import copy
+# pylint: disable=dangerous-default-value
 from .board import Board
 
 NUM_SQUARES_TO_EDGE = [(0, 0, 0, 0) for _ in range(64)]

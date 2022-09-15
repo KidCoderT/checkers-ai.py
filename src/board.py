@@ -208,8 +208,35 @@ class Board:
         Returns:
             bool: wether or not it is a draw
         """
-        pieces = list(self.all_pieces)
-        red = len(list(filter(lambda piece: piece[0] < 0, pieces)))
-        blue = len(pieces) - red
+        is_draw = False
 
-        return red == blue == 1
+        if self.current_side == self.PieceTypes.BLUE:
+            try:
+
+                last_three_blue_moves = list(
+                    map(
+                        lambda index: sorted(self.__made_moves[index][:2]),
+                        range(-2, -8, -2),
+                    )
+                )
+                last_three_red_moves = list(
+                    map(
+                        lambda index: sorted(self.__made_moves[index][:2]),
+                        range(-1, -6, -2),
+                    )
+                )
+
+                if (
+                    last_three_blue_moves[0]
+                    == last_three_blue_moves[1]
+                    == last_three_blue_moves[2]
+                    and last_three_red_moves[0]
+                    == last_three_red_moves[1]
+                    == last_three_red_moves[2]
+                ):
+                    is_draw = True
+
+            except IndexError:
+                return False
+
+        return is_draw

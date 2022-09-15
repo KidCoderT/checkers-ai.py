@@ -182,10 +182,6 @@ while True:
 
                 active_index = None
 
-        if event.type == pygame.KEYDOWN:
-            game.board.undo_move()
-            game.reset_correct_moves()
-
     last_move = game.board.last_move
     pieces = game.board.all_pieces
 
