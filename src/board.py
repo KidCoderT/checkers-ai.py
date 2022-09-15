@@ -81,7 +81,7 @@ class Board:
         self.__board[old_index] = 0
         self.__board[new_index] = piece
 
-        self.__made_moves.append((old_index, new_index))
+        self.__made_moves.append([old_index, new_index, [], False])
 
         if self.current_side == self.PieceTypes.BLUE:
             self.current_side = self.PieceTypes.RED
@@ -118,12 +118,12 @@ class Board:
                 self.__board[index] = 1
 
     @property
-    def last_move(self) -> tuple[int, int] | None:
+    def last_move(self) -> list | None:
         """Gives u the last move made and if its the beggining of the game
         then it returns None
 
         Returns:
-            tuple: (old_position, new_position)
+            list: (old_position, new_position, kill_positions, made_king)
         """
         return self.__made_moves[-1] if len(self.__made_moves) > 0 else None
 
@@ -151,6 +151,7 @@ class Board:
         if self.__board[index] == 0:
             raise IndexError("Cannot kill a non existent piece")
 
+        self.__made_moves[-1][2].append((index, self.__board[index]))
         self.__board[index] = 0
 
     def make_king(self, index: int):
@@ -170,16 +171,26 @@ class Board:
             raise IndexError("You cant king a non existent piece")
 
         self.__board[index] = self.__board[index] * 2
-        self.__made_moves[-1] = tuple(list(self.__made_moves[-1]) + [True])
+        self.__made_moves[-1][3] = True
 
     def undo_move(self):
         """Undo the last made move"""
         last_move = self.__made_moves.pop()
 
-        if len(last_move) == 3:
-            self.__board[last_move[2]] = self.__board[last_move[2]] // 2
+        if last_move[3]:
+            self.__board[last_move[1]] = self.__board[last_move[1]] // 2
 
-        self.move(*last_move[:2])
+        for (index, piece) in last_move[2]:  # type: ignore
+            self.__board[index] = piece
+
+        piece = self.__board[last_move[1]]
+        self.__board[last_move[1]] = 0
+        self.__board[last_move[0]] = piece
+
+        if self.current_side == self.PieceTypes.BLUE:
+            self.current_side = self.PieceTypes.RED
+        else:
+            self.current_side = self.PieceTypes.BLUE
 
     @property
     def board(self):

@@ -1,4 +1,4 @@
-# pylint: disable=no-member, not-an-iterable, invalid-name
+# pylint: disable=no-member, not-an-iterable, invalid-name, unsubscriptable-object
 
 import sys
 import pygame
@@ -182,12 +182,15 @@ while True:
 
                 active_index = None
 
+        if event.type == pygame.KEYDOWN:
+            game.board.undo_move()
+            game.reset_correct_moves()
+
     last_move = game.board.last_move
     pieces = game.board.all_pieces
 
     if last_move is not None:
-
-        for index in last_move:
+        for index in last_move[:2]:  # type: ignore
             i = index % 8
             j = index // 8
 
