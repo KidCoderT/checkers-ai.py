@@ -16,8 +16,9 @@ class Game:
         self.red = red
         self.blue = blue
 
-    def play_move(self, index: int):
-        """Play a move on the Board
+    def update_game(self, index: int):
+        """Play a move on the Board & updates
+        the game state accordingly
 
         Args:
             index (int): the index of the move

@@ -4,17 +4,16 @@ import sys
 import pygame
 import kct_pygame_tools as kpt
 from src.game import Game
+import random
+
+from settings import BOARD_SIZE, BOARD_OFFSET, BOARD_BORDER_THICKNESS, CELL_SIZE
+from particles import SparksContainer
 
 num_pass, num_fail = pygame.init()
 
 if num_fail > 0:
     print("There is some Error with pygame!")
     sys.exit()
-
-BOARD_OFFSET = 30
-BOARD_SIZE = 640
-CELL_SIZE = BOARD_SIZE // 8
-BOARD_BORDER_THICKNESS = 20
 
 width, height = 1200, BOARD_SIZE + BOARD_OFFSET * 2
 pygame.display.set_caption("Checker AI")
@@ -105,11 +104,14 @@ def get_piece_image(piece_value: int):
 clock = pygame.time.Clock()
 active_index: int | None = None
 active_piece: int = 0
-board_representation = None
-game = Game(True, True, board_representation)
+game = Game(True, True)
 should_inverse_board = game.blue is None and game.red is not None
+should_show_sparks = False
+sparks_timer = pygame.time.get_ticks()
+sparks_wait_time = 0
 
 last_move_notation = None
+sparks = SparksContainer()
 
 while True:
     mx, my = pygame.mouse.get_pos()
@@ -172,11 +174,33 @@ while True:
                     ):
                         try:
                             move_index = game.find_move_index(active_index, index)
-                            game.play_move(move_index)
+                            game.update_game(move_index)
                             color = "r" if game.board.piece(index) < 1 else "b"
                             last_move_notation = color = str(
                                 game.board.get_notation(index)
                             )
+
+                            if not game.is_playing:
+                                if game.winner is not None:
+
+                                    if (
+                                        game.winner < 0
+                                        and game.red is not None
+                                        or game.winner > 0
+                                        and game.blue is not None
+                                    ):
+                                        should_show_sparks = True
+                                        for _ in range(random.randint(1, 3)):
+                                            sparks.create_new_firework()
+
+                                        sparks_timer = pygame.time.get_ticks()
+
+                                else:
+                                    should_show_sparks = True
+                                    for _ in range(random.randint(1, 3)):
+                                        sparks.create_new_firework()
+
+                                    sparks_timer = pygame.time.get_ticks()
                         except ValueError:
                             pass
 
@@ -283,6 +307,16 @@ while True:
 
     if not game.is_playing:
         screen.blit(BLACK_OVERLAY, (BOARD_OFFSET, BOARD_OFFSET))
+
+        if should_show_sparks:
+            sparks.update(screen)
+
+            if pygame.time.get_ticks() - sparks_timer > sparks_wait_time:
+                for _ in range(random.randint(3, 10)):
+                    sparks.create_new_firework()
+
+                sparks_wait_time = random.randint(50, 400)
+                sparks_timer = pygame.time.get_ticks()
 
         if game.winner is not None:
             if game.winner > 0:
