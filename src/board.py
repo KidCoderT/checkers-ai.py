@@ -2,6 +2,25 @@ from enum import Enum
 import numpy as np
 
 
+POSITION_NOTATIONS = []
+
+index = 1
+for i in range(8):
+    is_even = i % 2 == 0
+    for j in range(8):
+
+        if is_even and j % 2 == 0:
+            POSITION_NOTATIONS.append(None)
+            continue
+
+        if not is_even and j % 2 != 0:
+            POSITION_NOTATIONS.append(None)
+            continue
+
+        POSITION_NOTATIONS.append(index)
+        index += 1
+
+
 class Board:
     """The Board Class contains the
     board to play the game on
@@ -11,7 +30,7 @@ class Board:
         RED = (-1, -2)
         BLUE = (1, 2)
 
-    def __init__(self, board):
+    def __init__(self, board, current_side: PieceTypes = PieceTypes.BLUE):
         if board is None:
             self.__board = np.zeros(64, dtype=np.dtype(int))
             self.__default_arrange_pieces()
@@ -19,25 +38,12 @@ class Board:
         else:
             self.__board = np.array(board, dtype=np.dtype(int))
 
-        self.position_notations = []
+        self.current_side = current_side
+        self.__made_moves = []
+
+    def reset(self):
+        self.__default_arrange_pieces()
         self.current_side = self.PieceTypes.BLUE
-
-        index = 1
-        for i in range(8):
-            is_even = i % 2 == 0
-            for j in range(8):
-
-                if is_even and j % 2 == 0:
-                    self.position_notations.append(None)
-                    continue
-
-                if not is_even and j % 2 != 0:
-                    self.position_notations.append(None)
-                    continue
-
-                self.position_notations.append(index)
-                index += 1
-
         self.__made_moves = []
 
     @property
@@ -90,6 +96,7 @@ class Board:
 
     def __default_arrange_pieces(self):
         """Sets up the board pieces"""
+        self.__board = np.zeros(64, dtype=np.dtype(int))
 
         # setup red pieces
         for i in range(3):
@@ -136,7 +143,7 @@ class Board:
         Returns:
             int | None: position notation
         """
-        return self.position_notations[index]
+        return POSITION_NOTATIONS[index]
 
     def kill_piece(self, index: int):
         """Kills / removes a piece from the board

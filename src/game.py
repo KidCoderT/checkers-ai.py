@@ -13,6 +13,9 @@ class Game:
         self.winner: None | int = None
         self.reset_correct_moves()
 
+        self.should_inverse_board = blue is None and red is not None
+        self.player_is_there = blue is not None or red is not None
+
         self.red = red
         self.blue = blue
 
@@ -60,3 +63,27 @@ class Game:
         based on the position
         """
         self.moves = generate_moves(self.board)
+
+    def reset_game(self, blue, red):
+        self.board.reset()
+        self.moves.clear()
+
+        self.is_playing = True
+        self.winner = None
+        self.reset_correct_moves()
+
+        self.should_inverse_board = blue is None and red is not None
+        self.player_is_there = blue is not None or red is not None
+
+        self.red = red
+        self.blue = blue
+
+    @property
+    def is_players_turn(self) -> bool:
+        return (
+            self.red is not None
+            and self.board.current_side == self.board.PieceTypes.RED
+        ) or (
+            self.blue is not None
+            and self.board.current_side == self.board.PieceTypes.BLUE
+        )

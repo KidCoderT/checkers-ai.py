@@ -1,4 +1,7 @@
 # pylint: disable=no-member, not-an-iterable, invalid-name, unsubscriptable-object
+# TODO 1: MAKE DRAG AND DROP AVAILABLE NO MATTER THE STATE
+# TODO 2: ADD INFO TEXT (MOVE, STATE)
+# TODO 3: CREATE RANDOM PLAYING ASYNCHRONOUS BOT
 
 import sys
 import pygame
@@ -8,6 +11,7 @@ import random
 
 from settings import BOARD_SIZE, BOARD_OFFSET, BOARD_BORDER_THICKNESS, CELL_SIZE
 from particles import SparksContainer
+from button import Button
 
 num_pass, num_fail = pygame.init()
 
@@ -84,6 +88,8 @@ BLACK_OVERLAY.set_alpha(100)
 
 MAX_NUMBER_OF_FIREWORKS = 65
 
+BTN_FONT = pygame.font.Font("./assets/fonts/FiraCode-Medium.ttf", 24)
+
 
 def get_piece_image(piece_value: int):
     """Gets the Image for a piece
@@ -103,11 +109,14 @@ def get_piece_image(piece_value: int):
     return image
 
 
+# TODO: MAKE MOVES SHOW INVERSED FOR RED
+
+
 clock = pygame.time.Clock()
 active_index: int | None = None
 active_piece: int = 0
 game = Game(True, True)
-should_inverse_board = game.blue is None and game.red is not None
+
 should_show_sparks = False
 sparks_timer = pygame.time.get_ticks()
 sparks_wait_time = 0
@@ -115,6 +124,12 @@ sparks_wait_time = 0
 last_move_notation = None
 sparks = SparksContainer()
 made_fireworks = 0
+
+buttons = [
+    (Button((714, 472), "AI VS AI", 4, 7, 458, 62, BTN_FONT), (None, None)),
+    (Button((714, 543), "PLAY AS BLUE", 4, 7, 458, 62, BTN_FONT), (True, None)),
+    (Button((714, 614), "PLAY AS RED", 4, 7, 458, 62, BTN_FONT), (None, True)),
+]
 
 while True:
     mx, my = pygame.mouse.get_pos()
@@ -135,7 +150,7 @@ while True:
 
             index = (y // CELL_SIZE) * 8 + (x // CELL_SIZE)
 
-            if should_inverse_board:
+            if game.should_inverse_board:
                 index = (7 - (y // CELL_SIZE)) * 8 + (7 - (x // CELL_SIZE))
 
             if 0 <= index < 64 and is_x_okay and is_y_okay:
@@ -164,7 +179,7 @@ while True:
 
                 index = (y // CELL_SIZE) * 8 + (x // CELL_SIZE)
 
-                if should_inverse_board:
+                if game.should_inverse_board:
                     index = (7 - (y // CELL_SIZE)) * 8 + (7 - (x // CELL_SIZE))
 
                 if active_index != index:
@@ -217,7 +232,7 @@ while True:
             i = index % 8
             j = index // 8
 
-            if should_inverse_board:
+            if game.should_inverse_board:
                 i = 7 - i
                 j = 7 - j
 
@@ -233,7 +248,7 @@ while True:
         i = (index % 8) + 0.5
         j = (index // 8) + 0.5
 
-        if should_inverse_board:
+        if game.should_inverse_board:
             i = 8 - i
             j = 8 - j
 
@@ -250,24 +265,47 @@ while True:
             screen.blit(piece_image, (x, y + 3))
             screen.blit(piece_image, (x, y - 3))
 
-    if active_index is not None:
-        piece_image = get_piece_image(active_piece)
-        possible_moves = filter(lambda move: move.start == active_index, game.moves)
+    if game.player_is_there and game.is_players_turn:
+        if active_index is not None:
+            possible_moves = filter(lambda move: move.start == active_index, game.moves)
 
-        for move in possible_moves:
-            i = BOARD_OFFSET + (move.end % 8) * CELL_SIZE
-            j = BOARD_OFFSET + (move.end // 8) * CELL_SIZE
+            for move in possible_moves:
+                i = BOARD_OFFSET + (move.end % 8) * CELL_SIZE
+                j = BOARD_OFFSET + (move.end // 8) * CELL_SIZE
 
-            pygame.draw.rect(
-                screen,
-                pygame.Color("#2AF63E"),
-                pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
-                6,
-            )
+                pygame.draw.rect(
+                    screen,
+                    pygame.Color("#2AF63E"),
+                    pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
+                    6,
+                )
 
-            for pos in move.move_through + [move.start]:
-                i = BOARD_OFFSET + (pos % 8) * CELL_SIZE
-                j = BOARD_OFFSET + (pos // 8) * CELL_SIZE
+                for pos in move.move_through + [move.start]:
+                    i = BOARD_OFFSET + (pos % 8) * CELL_SIZE
+                    j = BOARD_OFFSET + (pos // 8) * CELL_SIZE
+
+                    pygame.draw.rect(
+                        screen,
+                        pygame.Color("#F6CE2A"),
+                        pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
+                        6,
+                    )
+
+                for attack_pos in move.kill:
+                    i = BOARD_OFFSET + (attack_pos % 8) * CELL_SIZE
+                    j = BOARD_OFFSET + (attack_pos // 8) * CELL_SIZE
+
+                    pygame.draw.rect(
+                        screen,
+                        pygame.Color("#F62A2A"),
+                        pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
+                        6,
+                    )
+
+        else:
+            for pos in game.moves:
+                i = BOARD_OFFSET + (pos.start % 8) * CELL_SIZE
+                j = BOARD_OFFSET + (pos.start // 8) * CELL_SIZE
 
                 pygame.draw.rect(
                     screen,
@@ -276,17 +314,8 @@ while True:
                     6,
                 )
 
-            for attack_pos in move.kill:
-                i = BOARD_OFFSET + (attack_pos % 8) * CELL_SIZE
-                j = BOARD_OFFSET + (attack_pos // 8) * CELL_SIZE
-
-                pygame.draw.rect(
-                    screen,
-                    pygame.Color("#F62A2A"),
-                    pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
-                    6,
-                )
-
+    if active_index is not None:
+        piece_image = get_piece_image(active_piece)
         x = mx - piece_image.get_width() / 2
         y = my - piece_image.get_height() / 2
 
@@ -296,17 +325,13 @@ while True:
             screen.blit(piece_image, (x, y + 3))
             screen.blit(piece_image, (x, y - 3))
 
-    else:
-        for pos in game.moves:
-            i = BOARD_OFFSET + (pos.start % 8) * CELL_SIZE
-            j = BOARD_OFFSET + (pos.start // 8) * CELL_SIZE
+    for (button, options) in buttons:
+        clicked = button.update(screen)
 
-            pygame.draw.rect(
-                screen,
-                pygame.Color("#F6CE2A"),
-                pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
-                6,
-            )
+        if not clicked:
+            continue
+
+        game.reset_game(*options)
 
     if not game.is_playing:
         screen.blit(BLACK_OVERLAY, (BOARD_OFFSET, BOARD_OFFSET))
@@ -339,8 +364,6 @@ while True:
                 DRAW_BANNER,
                 (BOARD_OFFSET, (height / 2) - (DRAW_BANNER.get_height() / 2)),
             )
-    else:
-        print(game.board.score)
 
     pygame.display.update()
     clock.tick(60)
