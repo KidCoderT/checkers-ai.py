@@ -82,6 +82,8 @@ MOVE_SQUARE.set_alpha(50)
 BLACK_OVERLAY = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
 BLACK_OVERLAY.set_alpha(100)
 
+MAX_NUMBER_OF_FIREWORKS = 65
+
 
 def get_piece_image(piece_value: int):
     """Gets the Image for a piece
@@ -112,6 +114,7 @@ sparks_wait_time = 0
 
 last_move_notation = None
 sparks = SparksContainer()
+made_fireworks = 0
 
 while True:
     mx, my = pygame.mouse.get_pos()
@@ -173,8 +176,8 @@ while True:
                         and game.board.piece(index) == 0
                     ):
                         try:
-                            move_index = game.find_move_index(active_index, index)
-                            game.update_game(move_index)
+                            move = game.find_move(active_index, index)
+                            game.update_game(move)
                             color = "r" if game.board.piece(index) < 1 else "b"
                             last_move_notation = color = str(
                                 game.board.get_notation(index)
@@ -190,14 +193,14 @@ while True:
                                         and game.blue is not None
                                     ):
                                         should_show_sparks = True
-                                        for _ in range(random.randint(1, 3)):
+                                        for _ in range(30):
                                             sparks.create_new_firework()
 
                                         sparks_timer = pygame.time.get_ticks()
 
                                 else:
                                     should_show_sparks = True
-                                    for _ in range(random.randint(1, 3)):
+                                    for _ in range(30):
                                         sparks.create_new_firework()
 
                                     sparks_timer = pygame.time.get_ticks()
@@ -308,15 +311,16 @@ while True:
     if not game.is_playing:
         screen.blit(BLACK_OVERLAY, (BOARD_OFFSET, BOARD_OFFSET))
 
-        if should_show_sparks:
-            sparks.update(screen)
+        sparks.update(screen)
 
+        if should_show_sparks and made_fireworks <= MAX_NUMBER_OF_FIREWORKS:
             if pygame.time.get_ticks() - sparks_timer > sparks_wait_time:
                 for _ in range(random.randint(3, 10)):
                     sparks.create_new_firework()
 
                 sparks_wait_time = random.randint(50, 400)
                 sparks_timer = pygame.time.get_ticks()
+                made_fireworks += 1
 
         if game.winner is not None:
             if game.winner > 0:
@@ -335,6 +339,8 @@ while True:
                 DRAW_BANNER,
                 (BOARD_OFFSET, (height / 2) - (DRAW_BANNER.get_height() / 2)),
             )
+    else:
+        print(game.board.score)
 
     pygame.display.update()
     clock.tick(60)

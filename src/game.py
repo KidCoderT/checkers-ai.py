@@ -5,7 +5,7 @@ from .move import Move, generate_moves
 class Game:
     """The Game class for a checkers game"""
 
-    def __init__(self, red=None, blue=None, board: None | list = None):
+    def __init__(self, blue, red, board: None | list = None):
         self.board = Board(board)
         self.moves: list[Move] = []
 
@@ -16,14 +16,13 @@ class Game:
         self.red = red
         self.blue = blue
 
-    def update_game(self, index: int):
+    def update_game(self, move: Move):
         """Play a move on the Board & updates
         the game state accordingly
 
         Args:
-            index (int): the index of the move
+            move (Move): the move to play
         """
-        move = self.moves[index]
         move.play(self.board)
         self.reset_correct_moves()
         is_draw = self.board.is_draw()
@@ -36,7 +35,7 @@ class Game:
 
             self.is_playing = False
 
-    def find_move_index(self, start: int, end: int) -> int:
+    def find_move(self, start: int, end: int) -> Move:
         """Find the index for the  move based on the start and end
         this is possible only because all the moves are unique
 
@@ -48,11 +47,11 @@ class Game:
             ValueError: this is when the position is not there
 
         Returns:
-            int: the index of the move in the moves list
+            Move: the move to be played
         """
-        for i, move in enumerate(self.moves):
+        for move in self.moves:
             if move.start == start and move.end == end:
-                return i
+                return move
 
         raise ValueError(f"Move not Present with start and end: {(start, end)}")
 
@@ -60,8 +59,4 @@ class Game:
         """Resets the game instances correct move
         based on the position
         """
-        try:
-            self.moves = generate_moves(self.board)
-        except Exception as e:
-            print(self.board.board)
-            raise e
+        self.moves = generate_moves(self.board)

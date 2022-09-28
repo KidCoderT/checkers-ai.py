@@ -39,7 +39,7 @@ class Sparks:
             self.surface, (self.position.x - self.radius, self.position.y - self.radius)
         )
         self.surface.set_alpha(self.alpha)
-        self.alpha -= randint(10, 25)
+        self.alpha -= randint(8, 15)
 
 
 class SparksContainer:
@@ -47,15 +47,22 @@ class SparksContainer:
 
     def __init__(self):
         self.sparks = []
+        self.to_fire = []
 
     def create_new_firework(self):
         """Creates a new firework"""
         position = [
-            BOARD_OFFSET + (BOARD_SIZE / 2) + randint(-200, 200),
-            BOARD_OFFSET + (BOARD_SIZE / 2) + randint(-150, 150),
+            BOARD_OFFSET
+            + (BOARD_SIZE / 2)
+            + randint(-int(BOARD_SIZE / 2), int(BOARD_SIZE / 2)),
+            BOARD_OFFSET
+            + (BOARD_SIZE / 2)
+            + randint(-int(BOARD_SIZE / 2), int(BOARD_SIZE / 2)),
         ]
         for _ in range(randint(15, 30)):
-            self.sparks.append(Sparks(*position))
+            self.to_fire.append(
+                [Sparks(*position), pygame.time.get_ticks(), randint(100, 300)]
+            )
 
     def update(self, screen):
         """Updates & Renders all the spark
@@ -74,3 +81,13 @@ class SparksContainer:
 
         for i, index in enumerate(to_remove):
             self.sparks.pop(index - i)
+
+        to_remove.clear()
+
+        for i, (spark, timer, wait_time) in enumerate(self.to_fire):
+            if pygame.time.get_ticks() - timer > wait_time:
+                self.sparks.append(spark)
+                to_remove.append(i)
+
+        for i, index in enumerate(to_remove):
+            self.to_fire.pop(index - i)

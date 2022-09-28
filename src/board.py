@@ -240,3 +240,15 @@ class Board:
                 return False
 
         return is_draw
+
+    @property
+    def score(self) -> int:
+        """Gets the Score of the Board!"""
+        pieces = self.all_pieces
+
+        score = 0
+
+        for piece in pieces:
+            score += piece[0]
+
+        return score
