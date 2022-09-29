@@ -1,7 +1,8 @@
 # pylint: disable=no-member, not-an-iterable, invalid-name, unsubscriptable-object
-# TODO 1: MAKE DRAG AND DROP AVAILABLE NO MATTER THE STATE
-# TODO 2: ADD INFO TEXT (MOVE, STATE)
-# TODO 3: CREATE RANDOM PLAYING ASYNCHRONOUS BOT
+# // TODO 1: MAKE MOVES SHOW INVERSED FOR RED
+# TODO 2: MAKE DRAG AND DROP AVAILABLE NO MATTER THE STATE
+# TODO 3: ADD INFO TEXT (MOVE, STATE)
+# TODO 4: CREATE RANDOM PLAYING ASYNCHRONOUS BOT
 
 import sys
 import pygame
@@ -109,13 +110,27 @@ def get_piece_image(piece_value: int):
     return image
 
 
-# TODO: MAKE MOVES SHOW INVERSED FOR RED
+def get_position(
+    index: int, inverse_diff: int, offset: float = 0.0
+) -> tuple[float, float]:
+    global game
+
+    i, j = (index % 8) + offset, (index // 8) + offset
+
+    if game.should_inverse_board:
+        i = inverse_diff - i
+        j = inverse_diff - j
+
+    x = BOARD_OFFSET + i * CELL_SIZE
+    y = BOARD_OFFSET + j * CELL_SIZE
+
+    return x, y
 
 
 clock = pygame.time.Clock()
 active_index: int | None = None
 active_piece: int = 0
-game = Game(True, True)
+game = Game(True, None)
 
 should_show_sparks = False
 sparks_timer = pygame.time.get_ticks()
@@ -229,31 +244,33 @@ while True:
 
     if last_move is not None:
         for index in last_move[:2]:  # type: ignore
-            i = index % 8
-            j = index // 8
+            # i = index % 8
+            # j = index // 8
 
-            if game.should_inverse_board:
-                i = 7 - i
-                j = 7 - j
+            # if game.should_inverse_board:
+            #     i = 7 - i
+            #     j = 7 - j
 
-            x = BOARD_OFFSET + i * CELL_SIZE
-            y = BOARD_OFFSET + j * CELL_SIZE
-
+            # x = BOARD_OFFSET + i * CELL_SIZE
+            # y = BOARD_OFFSET + j * CELL_SIZE
+            x, y = get_position(index, 7)
             screen.blit(MOVE_SQUARE, (x, y))
 
     for (piece, index) in pieces:
         if index == active_index:
             continue
 
-        i = (index % 8) + 0.5
-        j = (index // 8) + 0.5
+        # i = (index % 8) + 0.5
+        # j = (index // 8) + 0.5
 
-        if game.should_inverse_board:
-            i = 8 - i
-            j = 8 - j
+        # if game.should_inverse_board:
+        #     i = 8 - i
+        #     j = 8 - j
 
-        x = BOARD_OFFSET + i * CELL_SIZE
-        y = BOARD_OFFSET + j * CELL_SIZE
+        # x = BOARD_OFFSET + i * CELL_SIZE
+        # y = BOARD_OFFSET + j * CELL_SIZE
+
+        x, y = get_position(index, 8, 0.5)
 
         piece_image = get_piece_image(piece)
         x -= piece_image.get_width() / 2
@@ -270,8 +287,7 @@ while True:
             possible_moves = filter(lambda move: move.start == active_index, game.moves)
 
             for move in possible_moves:
-                i = BOARD_OFFSET + (move.end % 8) * CELL_SIZE
-                j = BOARD_OFFSET + (move.end // 8) * CELL_SIZE
+                i, j = get_position(move.end, 7)
 
                 pygame.draw.rect(
                     screen,
@@ -281,8 +297,9 @@ while True:
                 )
 
                 for pos in move.move_through + [move.start]:
-                    i = BOARD_OFFSET + (pos % 8) * CELL_SIZE
-                    j = BOARD_OFFSET + (pos // 8) * CELL_SIZE
+                    # i = BOARD_OFFSET + (pos % 8) * CELL_SIZE
+                    # j = BOARD_OFFSET + (pos // 8) * CELL_SIZE
+                    i, j = get_position(pos, 7)
 
                     pygame.draw.rect(
                         screen,
@@ -292,8 +309,9 @@ while True:
                     )
 
                 for attack_pos in move.kill:
-                    i = BOARD_OFFSET + (attack_pos % 8) * CELL_SIZE
-                    j = BOARD_OFFSET + (attack_pos // 8) * CELL_SIZE
+                    # i = BOARD_OFFSET + (attack_pos % 8) * CELL_SIZE
+                    # j = BOARD_OFFSET + (attack_pos // 8) * CELL_SIZE
+                    i, j = get_position(attack_pos, 7)
 
                     pygame.draw.rect(
                         screen,
@@ -304,8 +322,9 @@ while True:
 
         else:
             for pos in game.moves:
-                i = BOARD_OFFSET + (pos.start % 8) * CELL_SIZE
-                j = BOARD_OFFSET + (pos.start // 8) * CELL_SIZE
+                # i = BOARD_OFFSET + (pos.start % 8) * CELL_SIZE
+                # j = BOARD_OFFSET + (pos.start // 8) * CELL_SIZE
+                i, j = get_position(pos.start, 7)
 
                 pygame.draw.rect(
                     screen,
