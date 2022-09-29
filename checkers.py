@@ -1,6 +1,6 @@
 # pylint: disable=no-member, not-an-iterable, invalid-name, unsubscriptable-object
-# // TODO 1: MAKE MOVES SHOW INVERSED FOR RED
-# TODO 2: MAKE DRAG AND DROP AVAILABLE NO MATTER THE STATE
+# // TODO 1: MAKE MOVES SHOW INVERSE FOR RED
+# // TODO 2: MAKE DRAG AND DROP AVAILABLE NO MATTER THE STATE
 # TODO 3: ADD INFO TEXT (MOVE, STATE)
 # TODO 4: CREATE RANDOM PLAYING ASYNCHRONOUS BOT
 
@@ -172,15 +172,8 @@ while True:
 
                 piece = game.board.piece(index)
                 if piece != 0:
-
-                    if piece in game.board.current_side.value and (
-                        piece < 0
-                        and game.red is not None
-                        or piece > 0
-                        and game.blue is not None
-                    ):
-                        active_piece = game.board.piece(index)
-                        active_index = index
+                    active_piece = game.board.piece(index)
+                    active_index = index
                 # else:
                 #     screen_shake(500)
 
@@ -197,7 +190,13 @@ while True:
                 if game.should_inverse_board:
                     index = (7 - (y // CELL_SIZE)) * 8 + (7 - (x // CELL_SIZE))
 
-                if active_index != index:
+                piece = game.board.piece(index)
+
+                if (
+                    active_index != index
+                    and game.player_is_there
+                    and game.is_players_turn
+                ):
                     if (
                         0 <= index < 64
                         and is_x_okay
@@ -244,31 +243,12 @@ while True:
 
     if last_move is not None:
         for index in last_move[:2]:  # type: ignore
-            # i = index % 8
-            # j = index // 8
-
-            # if game.should_inverse_board:
-            #     i = 7 - i
-            #     j = 7 - j
-
-            # x = BOARD_OFFSET + i * CELL_SIZE
-            # y = BOARD_OFFSET + j * CELL_SIZE
             x, y = get_position(index, 7)
             screen.blit(MOVE_SQUARE, (x, y))
 
     for (piece, index) in pieces:
         if index == active_index:
             continue
-
-        # i = (index % 8) + 0.5
-        # j = (index // 8) + 0.5
-
-        # if game.should_inverse_board:
-        #     i = 8 - i
-        #     j = 8 - j
-
-        # x = BOARD_OFFSET + i * CELL_SIZE
-        # y = BOARD_OFFSET + j * CELL_SIZE
 
         x, y = get_position(index, 8, 0.5)
 
@@ -297,8 +277,6 @@ while True:
                 )
 
                 for pos in move.move_through + [move.start]:
-                    # i = BOARD_OFFSET + (pos % 8) * CELL_SIZE
-                    # j = BOARD_OFFSET + (pos // 8) * CELL_SIZE
                     i, j = get_position(pos, 7)
 
                     pygame.draw.rect(
@@ -309,8 +287,6 @@ while True:
                     )
 
                 for attack_pos in move.kill:
-                    # i = BOARD_OFFSET + (attack_pos % 8) * CELL_SIZE
-                    # j = BOARD_OFFSET + (attack_pos // 8) * CELL_SIZE
                     i, j = get_position(attack_pos, 7)
 
                     pygame.draw.rect(
@@ -322,8 +298,6 @@ while True:
 
         else:
             for pos in game.moves:
-                # i = BOARD_OFFSET + (pos.start % 8) * CELL_SIZE
-                # j = BOARD_OFFSET + (pos.start // 8) * CELL_SIZE
                 i, j = get_position(pos.start, 7)
 
                 pygame.draw.rect(
@@ -337,6 +311,15 @@ while True:
         piece_image = get_piece_image(active_piece)
         x = mx - piece_image.get_width() / 2
         y = my - piece_image.get_height() / 2
+
+        i, j = get_position(active_index, 7)
+
+        pygame.draw.rect(
+            screen,
+            pygame.Color("#F6CE2A"),
+            pygame.Rect(i, j, CELL_SIZE, CELL_SIZE),
+            6,
+        )
 
         if abs(active_piece) % 2 != 0:
             screen.blit(piece_image, (x, y))
