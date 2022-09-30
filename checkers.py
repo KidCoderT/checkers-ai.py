@@ -1,7 +1,7 @@
-# pylint: disable=no-member, not-an-iterable, invalid-name, unsubscriptable-object
+# pylint: disable=no-member, not-an-iterable, invalid-name, unsubscriptable-object, redefined-outer-name, global-variable-not-assigned
 # // TODO 1: MAKE MOVES SHOW INVERSE FOR RED
 # // TODO 2: MAKE DRAG AND DROP AVAILABLE NO MATTER THE STATE
-# TODO 3: ADD INFO TEXT (MOVE, STATE)
+# // TODO 3: ADD INFO TEXT (MOVE, STATE)
 # TODO 4: CREATE RANDOM PLAYING ASYNCHRONOUS BOT
 
 import sys
@@ -76,6 +76,10 @@ PIECES_SCALE_FACTOR = 0.4
 RED_PIECE = kpt.load_and_scale("./assets/images/red.png", PIECES_SCALE_FACTOR)
 BLUE_PIECE = kpt.load_and_scale("./assets/images/blue.png", PIECES_SCALE_FACTOR)
 
+RED_INFO_PIECE = kpt.load_and_scale("./assets/images/red.png", 0.76)
+BLUE_INFO_PIECE = kpt.load_and_scale("./assets/images/blue.png", 0.76)
+DRAW_INFO_PIECE = kpt.load_and_scale("./assets/images/grey.png", 0.76)
+
 RED_WIN_BANNER = kpt.load_and_scale("./assets/images/Red Banner.png", 1)
 BLUE_WIN_BANNER = kpt.load_and_scale("./assets/images/Blue Banner.png", 1)
 DRAW_BANNER = kpt.load_and_scale("./assets/images/Draw Banner.png", 1)
@@ -90,9 +94,10 @@ BLACK_OVERLAY.set_alpha(100)
 MAX_NUMBER_OF_FIREWORKS = 65
 
 BTN_FONT = pygame.font.Font("./assets/fonts/FiraCode-Medium.ttf", 24)
+TEXT_FONT = pygame.font.Font("./assets/fonts/FiraCode-Medium.ttf", 24)
 
 
-def get_piece_image(piece_value: int):
+def get_piece_image(piece_value: int | None, is_info: bool = False):
     """Gets the Image for a piece
     based on the piece value
 
@@ -104,15 +109,34 @@ def get_piece_image(piece_value: int):
     Returns:
         pygame.surface.Surface: the piece image
     """
-    image = RED_PIECE if piece_value < 0 else BLUE_PIECE
-    if piece_value == 0:
+    if is_info:
+        if piece_value in [0, None]:
+            return DRAW_INFO_PIECE
+        image = RED_INFO_PIECE if piece_value < 0 else BLUE_INFO_PIECE
+        return image
+
+    if piece_value in [0, None]:
         raise ValueError("piece_value must not be zero!!")
+
+    image = RED_PIECE if piece_value < 0 else BLUE_PIECE
     return image
 
 
 def get_position(
     index: int, inverse_diff: int, offset: float = 0.0
 ) -> tuple[float, float]:
+    """Following the Dry method this function takes
+    in the index and returns the position of whetever
+    item.
+
+    Args:
+        index (int): the index of the item
+        inverse_diff (int): by how much to inverse
+        offset (float, optional): extra to the index. Defaults to 0.0.
+
+    Returns:
+        tuple[float, float]: position
+    """
     global game
 
     i, j = (index % 8) + offset, (index // 8) + offset
@@ -366,6 +390,42 @@ while True:
                 DRAW_BANNER,
                 (BOARD_OFFSET, (height / 2) - (DRAW_BANNER.get_height() / 2)),
             )
+
+        player_won = game.winner is not None and (
+            (game.winner < 0 and game.red is not None)
+            or (game.winner > 0 and game.blue is not None)
+        )
+        side = f"GAME OVER!!!"
+        state_text = "YOU WON!!!!" if player_won else "YOU LOSE!!!"
+
+        state_surf = TEXT_FONT.render(side, False, (0, 0, 0))
+        msg_surf = TEXT_FONT.render(state_text, False, (0, 0, 0))
+
+        screen.blit(state_surf, (915, 362))
+        screen.blit(msg_surf, (915, 392))
+
+        screen.blit(get_piece_image(game.winner, True), (789, 340))
+
+    else:
+        side = "RED" if game.board.current_side == game.board.PieceTypes.RED else "BLUE"
+        state_text = "State: " + side
+
+        msg = "AI's THINKING"
+        if game.player_is_there and game.is_players_turn:
+            msg = "YOUR TURN!!"
+        elif not game.player_is_there:
+            msg = "AI's PLAYING"
+
+        state_surf = TEXT_FONT.render(state_text, False, (0, 0, 0))
+        msg_surf = TEXT_FONT.render(msg, False, (0, 0, 0))
+
+        screen.blit(state_surf, (915, 362))
+        screen.blit(msg_surf, (915, 392))
+
+        screen.blit(
+            get_piece_image(game.board.current_side.value[0], True),
+            (789, 340),
+        )
 
     pygame.display.update()
     clock.tick(60)
