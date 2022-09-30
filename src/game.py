@@ -1,16 +1,18 @@
-from .board import Board
+from typing import Optional
+from .board import Board, PieceTypes
 from .move import Move, generate_moves
+import random, time
+import threading
 
 
 class Game:
-    """The Game class for a checkers game"""
+    """The Game class for a checkers game
+    this also contains the ai gameplay"""
 
     def __init__(self, blue, red, board: None | list = None):
         self.board = Board(board)
         self.moves: list[Move] = []
 
-        self.is_playing = True
-        self.winner: None | int = None
         self.reset_correct_moves()
 
         self.should_inverse_board = blue is None and red is not None
@@ -19,24 +21,40 @@ class Game:
         self.red = red
         self.blue = blue
 
-    def update_game(self, move: Move):
+        self.comp_is_playing = False
+
+    def make_comp_play(self):
+        self.comp_is_playing = True
+
+        time.sleep(0.2)
+
+        random.choice(self.moves).play(self.board)
+        self.reset_correct_moves()
+        self.board.update_state(len(self.moves))
+
+        self.comp_is_playing = False
+        self.update_game()
+
+    def update_game(self, move: Optional[Move] = None):
         """Play a move on the Board & updates
         the game state accordingly
 
         Args:
             move (Move): the move to play
         """
-        move.play(self.board)
-        self.reset_correct_moves()
-        is_draw = self.board.is_draw()
 
-        if len(self.moves) == 0 or is_draw:
-            if is_draw:
-                self.winner = None
-            else:
-                self.winner = self.board.current_side.value[0] * -1
+        if move is not None:
+            move.play(self.board)
+            self.reset_correct_moves()
+            self.board.update_state(len(self.moves))
 
-            self.is_playing = False
+        if (
+            not self.is_players_turn
+            and self.board.is_playing
+            and not self.comp_is_playing
+        ):
+            comp = threading.Thread(target=self.make_comp_play)
+            comp.start()
 
     def find_move(self, start: int, end: int) -> Move:
         """Find the index for the  move based on the start and end
@@ -67,9 +85,6 @@ class Game:
     def reset_game(self, blue, red):
         self.board.reset()
         self.moves.clear()
-
-        self.is_playing = True
-        self.winner = None
         self.reset_correct_moves()
 
         self.should_inverse_board = blue is None and red is not None
@@ -78,12 +93,10 @@ class Game:
         self.red = red
         self.blue = blue
 
+        self.update_game()
+
     @property
     def is_players_turn(self) -> bool:
-        return (
-            self.red is not None
-            and self.board.current_side == self.board.PieceTypes.RED
-        ) or (
-            self.blue is not None
-            and self.board.current_side == self.board.PieceTypes.BLUE
+        return (self.red is not None and self.board.current_side == PieceTypes.RED) or (
+            self.blue is not None and self.board.current_side == PieceTypes.BLUE
         )

@@ -21,14 +21,15 @@ for i in range(8):
         index += 1
 
 
+class PieceTypes(Enum):
+    RED = (-1, -2)
+    BLUE = (1, 2)
+
+
 class Board:
     """The Board Class contains the
     board to play the game on
     """
-
-    class PieceTypes(Enum):
-        RED = (-1, -2)
-        BLUE = (1, 2)
 
     def __init__(self, board, current_side: PieceTypes = PieceTypes.BLUE):
         if board is None:
@@ -41,10 +42,16 @@ class Board:
         self.current_side = current_side
         self.__made_moves = []
 
+        self.is_playing = True
+        self.winner: None | int = None
+
     def reset(self):
         self.__default_arrange_pieces()
-        self.current_side = self.PieceTypes.BLUE
+        self.current_side = PieceTypes.BLUE
         self.__made_moves = []
+
+        self.is_playing = True
+        self.winner: None | int = None
 
     @property
     def all_pieces(self):
@@ -89,10 +96,10 @@ class Board:
 
         self.__made_moves.append([old_index, new_index, [], False])
 
-        if self.current_side == self.PieceTypes.BLUE:
-            self.current_side = self.PieceTypes.RED
+        if self.current_side == PieceTypes.BLUE:
+            self.current_side = PieceTypes.RED
         else:
-            self.current_side = self.PieceTypes.BLUE
+            self.current_side = PieceTypes.BLUE
 
     def __default_arrange_pieces(self):
         """Sets up the board pieces"""
@@ -194,10 +201,10 @@ class Board:
         self.__board[last_move[1]] = 0
         self.__board[last_move[0]] = piece
 
-        if self.current_side == self.PieceTypes.BLUE:
-            self.current_side = self.PieceTypes.RED
+        if self.current_side == PieceTypes.BLUE:
+            self.current_side = PieceTypes.RED
         else:
-            self.current_side = self.PieceTypes.BLUE
+            self.current_side = PieceTypes.BLUE
 
     @property
     def board(self):
@@ -217,7 +224,7 @@ class Board:
         """
         is_draw = False
 
-        if self.current_side == self.PieceTypes.BLUE:
+        if self.current_side == PieceTypes.BLUE:
             try:
 
                 last_three_blue_moves = list(
@@ -259,3 +266,14 @@ class Board:
             score += piece[0]
 
         return score
+
+    def update_state(self, possible_moves: int):
+        is_draw = self.is_draw()
+
+        if possible_moves == 0 or is_draw:
+            if is_draw:
+                self.winner = None
+            else:
+                self.winner = self.current_side.value[0] * -1
+
+            self.is_playing = False

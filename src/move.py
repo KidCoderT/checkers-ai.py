@@ -1,6 +1,6 @@
 # pylint: disable=dangerous-default-value
 from settings import DIRECTIONAL_OFFSET, NUM_SQUARES_TO_EDGE
-from .board import Board
+from .board import Board, PieceTypes
 
 
 class Move:
@@ -97,9 +97,7 @@ def generate_attacking_moves(piece: int, start: int, board: Board) -> list[Move]
     move = []
 
     opposite_piece = (
-        Board.PieceTypes.RED
-        if piece in Board.PieceTypes.BLUE.value
-        else Board.PieceTypes.BLUE
+        PieceTypes.RED if piece in PieceTypes.BLUE.value else PieceTypes.BLUE
     )
 
     start_direction_index = 0
@@ -162,8 +160,6 @@ def generate_moves(board: Board) -> list[Move]:
     Returns:
         list[Move]: the moves
     """
-
-    # TODO: Add multiprocessing
 
     attacking_moves = []
     max_kills = -100

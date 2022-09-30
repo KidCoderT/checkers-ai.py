@@ -1,14 +1,10 @@
 # pylint: disable=no-member, not-an-iterable, invalid-name, unsubscriptable-object, redefined-outer-name, global-variable-not-assigned
-# // TODO 1: MAKE MOVES SHOW INVERSE FOR RED
-# // TODO 2: MAKE DRAG AND DROP AVAILABLE NO MATTER THE STATE
-# // TODO 3: ADD INFO TEXT (MOVE, STATE)
-# TODO 4: CREATE RANDOM PLAYING ASYNCHRONOUS BOT
 
 import sys
+import random
 import pygame
 import kct_pygame_tools as kpt
-from src.game import Game
-import random
+from src.game import Game, PieceTypes
 
 from settings import BOARD_SIZE, BOARD_OFFSET, BOARD_BORDER_THICKNESS, CELL_SIZE
 from particles import SparksContainer
@@ -110,12 +106,12 @@ def get_piece_image(piece_value: int | None, is_info: bool = False):
         pygame.surface.Surface: the piece image
     """
     if is_info:
-        if piece_value in [0, None]:
+        if piece_value is None or piece_value == 0:
             return DRAW_INFO_PIECE
         image = RED_INFO_PIECE if piece_value < 0 else BLUE_INFO_PIECE
         return image
 
-    if piece_value in [0, None]:
+    if piece_value is None or piece_value == 0:
         raise ValueError("piece_value must not be zero!!")
 
     image = RED_PIECE if piece_value < 0 else BLUE_PIECE
@@ -180,7 +176,7 @@ while True:
             pygame.quit()
             sys.exit()
 
-        if game.is_playing and event.type == pygame.MOUSEBUTTONDOWN:
+        if game.board.is_playing and event.type == pygame.MOUSEBUTTONDOWN:
             x = mx - BOARD_OFFSET
             y = my - BOARD_OFFSET
 
@@ -201,7 +197,7 @@ while True:
                 # else:
                 #     screen_shake(500)
 
-        if game.is_playing and event.type == pygame.MOUSEBUTTONUP:
+        if game.board.is_playing and event.type == pygame.MOUSEBUTTONUP:
             if active_index is not None:
                 x = mx - BOARD_OFFSET
                 y = my - BOARD_OFFSET
@@ -236,13 +232,13 @@ while True:
                                 game.board.get_notation(index)
                             )
 
-                            if not game.is_playing:
-                                if game.winner is not None:
+                            if not game.board.is_playing:
+                                if game.board.winner is not None:
 
                                     if (
-                                        game.winner < 0
+                                        game.board.winner < 0
                                         and game.red is not None
-                                        or game.winner > 0
+                                        or game.board.winner > 0
                                         and game.blue is not None
                                     ):
                                         should_show_sparks = True
@@ -359,7 +355,7 @@ while True:
 
         game.reset_game(*options)
 
-    if not game.is_playing:
+    if not game.board.is_playing:
         screen.blit(BLACK_OVERLAY, (BOARD_OFFSET, BOARD_OFFSET))
 
         sparks.update(screen)
@@ -373,8 +369,8 @@ while True:
                 sparks_timer = pygame.time.get_ticks()
                 made_fireworks += 1
 
-        if game.winner is not None:
-            if game.winner > 0:
+        if game.board.winner is not None:
+            if game.board.winner > 0:
                 screen.blit(
                     BLUE_WIN_BANNER,
                     (BOARD_OFFSET, (height / 2) - (BLUE_WIN_BANNER.get_height() / 2)),
@@ -391,9 +387,9 @@ while True:
                 (BOARD_OFFSET, (height / 2) - (DRAW_BANNER.get_height() / 2)),
             )
 
-        player_won = game.winner is not None and (
-            (game.winner < 0 and game.red is not None)
-            or (game.winner > 0 and game.blue is not None)
+        player_won = game.board.winner is not None and (
+            (game.board.winner < 0 and game.red is not None)
+            or (game.board.winner > 0 and game.blue is not None)
         )
         side = f"GAME OVER!!!"
         state_text = "YOU WON!!!!" if player_won else "YOU LOSE!!!"
@@ -404,10 +400,10 @@ while True:
         screen.blit(state_surf, (915, 362))
         screen.blit(msg_surf, (915, 392))
 
-        screen.blit(get_piece_image(game.winner, True), (789, 340))
+        screen.blit(get_piece_image(game.board.winner, True), (789, 340))
 
     else:
-        side = "RED" if game.board.current_side == game.board.PieceTypes.RED else "BLUE"
+        side = "RED" if game.board.current_side == PieceTypes.RED else "BLUE"
         state_text = "State: " + side
 
         msg = "AI's THINKING"
