@@ -1,18 +1,21 @@
+# pylint: disable=global-statement
+
 import time
 from math import inf
-from .board import Board
-from .move import Move, generate_moves
 from copy import deepcopy
+
+from .move import Move, generate_moves
+from .board import Board
 
 # // TODO: MOVE ORDERING
 # // TODO: CHECK HOW MANY POSITIONS EVALUATED
-# TODO: TRANSPOSITION TABLE
 # // TODO: MOVE UNTIL NO CAPTURE
-# TODO: TOWARDS THE END MOVE PIECES TO EDGES
-# TODO: OPENING
+# // TODO: TRANSPOSITION TABLE
 # TODO: ITERATIVE DEEPENING
 
+DEPTH = 6
 POSITIONS = 0
+TRANSPOSITION_TABLE = {key: {} for key in range(DEPTH)}
 
 
 def search_all_captures(board: Board, alpha, beta):
@@ -26,9 +29,12 @@ def search_all_captures(board: Board, alpha, beta):
     alpha = max(alpha, evaluation)
     all_moves = generate_moves(board)
 
-    if not all_moves[0].is_killing_move:
-        POSITIONS += 1
-        return alpha
+    try:
+        if not all_moves[0].is_killing_move:
+            POSITIONS += 1
+            return alpha
+    except IndexError:
+        return evaluation
 
     for move in all_moves:
         move.play(board)
@@ -45,17 +51,26 @@ def search_all_captures(board: Board, alpha, beta):
 
 
 def search(board: Board, depth: int, alpha, beta) -> float:
-    global POSITIONS
+    global POSITIONS, TRANSPOSITION_TABLE
     all_moves = generate_moves(board)
     board.update_state()
 
+    key = board.hash()
+
+    if key in TRANSPOSITION_TABLE[depth]:
+        return TRANSPOSITION_TABLE[depth][key]
+
     if depth == 0:
         POSITIONS += 1
-        return search_all_captures(board, alpha, beta)
+        score = search_all_captures(board, alpha, beta)
+        TRANSPOSITION_TABLE[depth][key] = score
+        return score
 
     if not board.is_playing:
         POSITIONS += 1
-        return board.score
+        score = board.score
+        TRANSPOSITION_TABLE[depth][key] = score
+        return score
 
     # move ordering
     def score_move(move: Move):
@@ -86,6 +101,7 @@ def search(board: Board, depth: int, alpha, beta) -> float:
 
         if evaluation >= beta:
             POSITIONS += 1
+            TRANSPOSITION_TABLE[depth][key] = beta
             return beta
 
         alpha = max(best_val, evaluation)
@@ -93,7 +109,7 @@ def search(board: Board, depth: int, alpha, beta) -> float:
 
 
 def get_best_move(real_board: Board) -> Move:
-    global POSITIONS
+    global POSITIONS, TRANSPOSITION_TABLE
 
     start_time = time.monotonic()
     board = deepcopy(real_board)
@@ -103,6 +119,7 @@ def get_best_move(real_board: Board) -> Move:
     best_move = all_moves[0]
 
     POSITIONS = 0
+    TRANSPOSITION_TABLE = {key: {} for key in range(DEPTH + 1)}
 
     if len(all_moves) == 1:
         print(0)
@@ -110,7 +127,7 @@ def get_best_move(real_board: Board) -> Move:
 
     for move in all_moves:
         move.play(board)
-        value = -search(board, 10, -inf, inf)
+        value = -search(board, DEPTH, -inf, inf)
         is_best_val = value >= best_val
 
         if is_best_val:

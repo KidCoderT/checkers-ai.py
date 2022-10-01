@@ -300,3 +300,6 @@ class Board:
         if not is_moves_possible:
             self.winner = self.current_side.value[0] * -1
             self.is_playing = False
+
+    def hash(self):
+        return "".join(map(lambda x: str(x), self.board))
