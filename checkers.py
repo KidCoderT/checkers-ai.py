@@ -391,7 +391,7 @@ while True:
         side = "GAME OVER!!!"
         state_text = "YOU WON!!!!" if player_won else "YOU LOSE!!!"
 
-        if game.board is None:
+        if game.board.winner is None:
             state_text = "DRAW!!"
 
         state_surf = TEXT_FONT.render(side, False, (0, 0, 0))
