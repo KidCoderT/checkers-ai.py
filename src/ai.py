@@ -13,16 +13,16 @@ from copy import deepcopy
 # TODO: ITERATIVE DEEPENING
 
 
-def minimax(board: Board, depth: int, alpha, beta, positions: int) -> float:
+def search(board: Board, depth: int, alpha, beta, positions: int) -> float:
     all_moves = generate_moves(board)
     board.update_state()
 
     if depth == 0 or not board.is_playing:
-        positions += 1
+        positions = positions + 1
         return board.score
 
     # move ordering
-    def order_move(move: Move):
+    def score_move(move: Move):
         move_score = 0
 
         weak_piece = abs(board.piece(move.start)) == 1
@@ -40,12 +40,12 @@ def minimax(board: Board, depth: int, alpha, beta, positions: int) -> float:
 
         return move_score
 
-    all_moves.sort(key=order_move)
+    all_moves.sort(key=score_move)
 
     best_val = -inf
     for move in all_moves:
         move.play(board)
-        evaluation = -minimax(board, depth - 1, -beta, -alpha, positions)
+        evaluation = -search(board, depth - 1, -beta, -alpha, positions)
         board.undo_move()
 
         if evaluation >= beta:
@@ -71,7 +71,7 @@ def get_best_move(real_board: Board) -> Move:
 
     for move in all_moves:
         move.play(board)
-        value = -minimax(board, 6, -inf, inf, positions)
+        value = -search(board, 6, -inf, inf, positions)
         is_best_val = value >= best_val
 
         if is_best_val:

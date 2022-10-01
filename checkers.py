@@ -247,12 +247,6 @@ while True:
 
                                         sparks_timer = pygame.time.get_ticks()
 
-                                else:
-                                    should_show_sparks = True
-                                    for _ in range(30):
-                                        sparks.create_new_firework()
-
-                                    sparks_timer = pygame.time.get_ticks()
                         except ValueError:
                             pass
 
@@ -391,8 +385,11 @@ while True:
             (game.board.winner < 0 and game.red is not None)
             or (game.board.winner > 0 and game.blue is not None)
         )
-        side = f"GAME OVER!!!"
+        side = "GAME OVER!!!"
         state_text = "YOU WON!!!!" if player_won else "YOU LOSE!!!"
+
+        if game.board is None:
+            state_text = "DRAW!!"
 
         state_surf = TEXT_FONT.render(side, False, (0, 0, 0))
         msg_surf = TEXT_FONT.render(state_text, False, (0, 0, 0))

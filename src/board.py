@@ -1,27 +1,7 @@
 from math import inf
 import numpy as np
 from .move import generate_sliding_moves, generate_attacking_moves
-from .utils import PieceTypes
-
-POSITION_NOTATIONS = []
-
-index = 1
-for i in range(8):
-    is_even = i % 2 == 0
-    for j in range(8):
-
-        if is_even and j % 2 == 0:
-            POSITION_NOTATIONS.append(None)
-            continue
-
-        if not is_even and j % 2 != 0:
-            POSITION_NOTATIONS.append(None)
-            continue
-
-        POSITION_NOTATIONS.append(index)
-        index += 1
-
-del index
+from .utils import PieceTypes, POSITION_NOTATIONS
 
 
 class Board:
@@ -45,6 +25,7 @@ class Board:
         self.moves_without_kills = 0
 
     def reset(self):
+        """Resets the Board to the initial state"""
         self.__default_arrange_pieces()
         self.current_side = PieceTypes.BLUE
         self.__made_moves = []
@@ -294,6 +275,9 @@ class Board:
         return score
 
     def update_state(self):
+        """Checks the State of the Game
+        whether its draw or if someone won!!
+        """
         is_draw = self.is_draw()
 
         if is_draw:
