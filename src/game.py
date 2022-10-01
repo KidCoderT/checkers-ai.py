@@ -1,8 +1,10 @@
+import time
+import threading
 from typing import Optional
+
 from .board import Board, PieceTypes
 from .move import Move, generate_moves
-import random, time
-import threading
+from .ai import get_best_move
 
 
 class Game:
@@ -27,10 +29,10 @@ class Game:
         self.comp_is_playing = True
 
         time.sleep(0.2)
-
-        random.choice(self.moves).play(self.board)
+        # random.choice(self.moves).play(self.board)
+        get_best_move(self.board).play(self.board)
         self.reset_correct_moves()
-        self.board.update_state(len(self.moves))
+        self.board.update_state()
 
         self.comp_is_playing = False
         self.update_game()
@@ -46,7 +48,7 @@ class Game:
         if move is not None:
             move.play(self.board)
             self.reset_correct_moves()
-            self.board.update_state(len(self.moves))
+            self.board.update_state()
 
         if (
             not self.is_players_turn
@@ -54,6 +56,7 @@ class Game:
             and not self.comp_is_playing
         ):
             comp = threading.Thread(target=self.make_comp_play)
+            comp.daemon = True
             comp.start()
 
     def find_move(self, start: int, end: int) -> Move:

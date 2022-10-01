@@ -1,45 +1,77 @@
-from math import inf as infinity
-from .board import Board, PieceTypes
+import time
+from math import inf
+from .board import Board
 from .move import Move, generate_moves
+from copy import deepcopy
+
+# // TODO: MOVE ORDERING
+# TODO: CHECK HOW MANY POSITIONS EVALUATED
+# TODO: TRANSPOSITION TABLE
+# TODO: MOVE UNTIL NO CAPTURE
+# TODO: TOWARDS THE END MOVE PIECES TO EDGES
+# TODO: OPENING
+# TODO: ITERATIVE DEEPENING
 
 
-def minimax(board: Board, is_maximizing_player: bool) -> float:
+def minimax(board: Board, depth: int, alpha, beta, positions: int) -> float:
     all_moves = generate_moves(board)
-    board.update_state(len(all_moves))
+    board.update_state()
 
-    if board.winner is not None or not board.is_playing:
+    if depth == 0 or not board.is_playing:
+        positions += 1
         return board.score
 
-    if is_maximizing_player:
-        best_val = -infinity
-        for move in all_moves:
-            move.play(board)
-            evaluation = minimax(board, False)
-            board.undo_move()
+    # move ordering
+    def order_move(move: Move):
+        move_score = 0
 
-            best_val = max(best_val, evaluation)
-        return best_val
+        weak_piece = abs(board.piece(move.start)) == 1
+        weak_on_kill_king = 6 if weak_piece else 4
 
-    else:
-        best_val = infinity
-        for move in all_moves:
-            move.play(board)
-            evaluation = minimax(board, True)
-            board.undo_move()
+        for index in move.kills:
+            if abs(board.piece(index)) == 2:
+                move_score += weak_on_kill_king
+                continue
 
-            best_val = min(best_val, evaluation)
-        return best_val
+            move_score += 2
+
+        if move.make_king:
+            move_score += 5
+
+        return move_score
+
+    all_moves.sort(key=order_move)
+
+    best_val = -inf
+    for move in all_moves:
+        move.play(board)
+        evaluation = -minimax(board, depth - 1, -beta, -alpha, positions)
+        board.undo_move()
+
+        if evaluation >= beta:
+            return beta
+
+        alpha = max(best_val, evaluation)
+    return alpha
 
 
-def get_best_move(board: Board) -> Move:
-    best_val = -infinity
+def get_best_move(real_board: Board) -> Move:
+    start_time = time.monotonic()
+    board = deepcopy(real_board)
+
+    best_val = -inf
     all_moves = generate_moves(board)
     best_move = all_moves[0]
-    sign = 1 if board.current_side == PieceTypes.BLUE else -1
+
+    positions = 0
+
+    if len(all_moves) == 1:
+        print(0)
+        return best_move
 
     for move in all_moves:
         move.play(board)
-        value = minimax(board, board.current_side == PieceTypes.BLUE) * sign
+        value = -minimax(board, 6, -inf, inf, positions)
         is_best_val = value >= best_val
 
         if is_best_val:
@@ -48,4 +80,7 @@ def get_best_move(board: Board) -> Move:
 
         board.undo_move()
 
+    end_time = time.monotonic()
+
+    print(end_time - start_time, positions)
     return best_move

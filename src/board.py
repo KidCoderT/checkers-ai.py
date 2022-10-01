@@ -1,6 +1,7 @@
-from enum import Enum
+from math import inf
 import numpy as np
-
+from .move import generate_sliding_moves, generate_attacking_moves
+from .utils import PieceTypes
 
 POSITION_NOTATIONS = []
 
@@ -20,10 +21,7 @@ for i in range(8):
         POSITION_NOTATIONS.append(index)
         index += 1
 
-
-class PieceTypes(Enum):
-    RED = (-1, -2)
-    BLUE = (1, 2)
+del index
 
 
 class Board:
@@ -44,6 +42,7 @@ class Board:
 
         self.is_playing = True
         self.winner: None | int = None
+        self.moves_without_kills = 0
 
     def reset(self):
         self.__default_arrange_pieces()
@@ -52,6 +51,7 @@ class Board:
 
         self.is_playing = True
         self.winner: None | int = None
+        self.moves_without_kills = 0
 
     @property
     def all_pieces(self):
@@ -72,34 +72,6 @@ class Board:
         Returns: the piece
         """
         return self.__board[index]
-
-    def move(self, old_index: int, new_index: int):
-        """Moves Piece from old_index to new_index
-
-        Args:
-            old_index (int): the current position of the piece
-            new_index (int): the new position for the piece
-
-        Raises:
-            IndexError: If you try to move the piece to an occupied position
-            IndexError: If you try to move a non existent piece
-        """
-        if self.__board[new_index] != 0:
-            raise IndexError("You cant move a piece to an occupied square")
-
-        if self.__board[old_index] == 0:
-            raise IndexError("You cant move a non existent piece!")
-
-        piece = self.__board[old_index]
-        self.__board[old_index] = 0
-        self.__board[new_index] = piece
-
-        self.__made_moves.append([old_index, new_index, [], False])
-
-        if self.current_side == PieceTypes.BLUE:
-            self.current_side = PieceTypes.RED
-        else:
-            self.current_side = PieceTypes.BLUE
 
     def __default_arrange_pieces(self):
         """Sets up the board pieces"""
@@ -152,6 +124,37 @@ class Board:
         """
         return POSITION_NOTATIONS[index]
 
+    def move(self, old_index: int, new_index: int):
+        """Moves Piece from old_index to new_index
+
+        Args:
+            old_index (int): the current position of the piece
+            new_index (int): the new position for the piece
+
+        Raises:
+            IndexError: If you try to move the piece to an occupied position
+            IndexError: If you try to move a non existent piece
+        """
+        if self.__board[new_index] != 0:
+            raise IndexError("You cant move a piece to an occupied square")
+
+        if self.__board[old_index] == 0:
+            raise IndexError("You cant move a non existent piece!")
+
+        piece = self.__board[old_index]
+        self.__board[old_index] = 0
+        self.__board[new_index] = piece
+
+        self.__made_moves.append(
+            [old_index, new_index, [], False, self.moves_without_kills]
+        )
+        self.moves_without_kills += 1
+
+        if self.current_side == PieceTypes.BLUE:
+            self.current_side = PieceTypes.RED
+        else:
+            self.current_side = PieceTypes.BLUE
+
     def kill_piece(self, index: int):
         """Kills / removes a piece from the board
 
@@ -166,6 +169,7 @@ class Board:
             raise IndexError("Cannot kill a non existent piece")
 
         self.__made_moves[-1][2].append((index, self.__board[index]))
+        self.moves_without_kills = 0
         self.__board[index] = 0
 
     def make_king(self, index: int):
@@ -201,13 +205,15 @@ class Board:
         self.__board[last_move[1]] = 0
         self.__board[last_move[0]] = piece
 
+        self.moves_without_kills = last_move[4]
+
         if self.current_side == PieceTypes.BLUE:
             self.current_side = PieceTypes.RED
         else:
             self.current_side = PieceTypes.BLUE
 
     @property
-    def board(self):
+    def board(self) -> list:
         """Gives the Board Representation
 
         Returns:
@@ -222,7 +228,7 @@ class Board:
         Returns:
             bool: wether or not it is a draw
         """
-        is_draw = False
+        is_draw = self.moves_without_kills >= 40
 
         if self.current_side == PieceTypes.BLUE:
             try:
@@ -251,29 +257,62 @@ class Board:
                     is_draw = True
 
             except IndexError:
-                return False
+                is_draw = False
+
+        if is_draw:
+            self.winner = None
+            self.is_playing = False
 
         return is_draw
 
     @property
-    def score(self) -> int:
+    def score(self) -> int | float:
         """Gets the Score of the Board!"""
-        pieces = self.all_pieces
 
-        score = 0
+        if self.is_draw():
+            return 0
 
-        for piece in pieces:
-            score += piece[0]
+        if not self.is_playing and self.winner is not None:
+            return inf * self.winner
+
+        def piece_value(value):
+            result = abs(value[0])
+
+            if result / 2 == 1:
+                return 4
+
+            return result
+
+        red = sum(map(piece_value, filter(lambda x: x[0] < 0, self.all_pieces)))
+        blue = sum(map(piece_value, filter(lambda x: x[0] > 0, self.all_pieces)))
+
+        score = blue - red
+
+        if self.current_side == PieceTypes.RED:
+            score *= -1
 
         return score
 
-    def update_state(self, possible_moves: int):
+    def update_state(self):
         is_draw = self.is_draw()
 
-        if possible_moves == 0 or is_draw:
-            if is_draw:
-                self.winner = None
-            else:
-                self.winner = self.current_side.value[0] * -1
+        if is_draw:
+            return
 
+        is_moves_possible = False
+        pieces = self.all_pieces
+        board = self.board  # type: ignore
+
+        for (piece, start) in pieces:
+            if piece in self.current_side.value:
+
+                piece_attack_moves = generate_attacking_moves(piece, start, board)
+                piece_sliding_moves = generate_sliding_moves(piece, start, board)
+
+                if len(piece_attack_moves) > 0 or len(piece_sliding_moves) > 0:
+                    is_moves_possible = True
+                    break
+
+        if not is_moves_possible:
+            self.winner = self.current_side.value[0] * -1
             self.is_playing = False

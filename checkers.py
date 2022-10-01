@@ -306,7 +306,7 @@ while True:
                         6,
                     )
 
-                for attack_pos in move.kill:
+                for attack_pos in move.kills:
                     i, j = get_position(attack_pos, 7)
 
                     pygame.draw.rect(
