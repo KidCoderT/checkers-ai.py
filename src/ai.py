@@ -5,20 +5,23 @@ from .move import Move, generate_moves
 from copy import deepcopy
 
 # // TODO: MOVE ORDERING
-# TODO: CHECK HOW MANY POSITIONS EVALUATED
+# // TODO: CHECK HOW MANY POSITIONS EVALUATED
 # TODO: TRANSPOSITION TABLE
 # TODO: MOVE UNTIL NO CAPTURE
 # TODO: TOWARDS THE END MOVE PIECES TO EDGES
 # TODO: OPENING
 # TODO: ITERATIVE DEEPENING
 
+positions = 0
 
-def search(board: Board, depth: int, alpha, beta, positions: int) -> float:
+
+def search(board: Board, depth: int, alpha, beta) -> float:
+    global positions
     all_moves = generate_moves(board)
     board.update_state()
 
     if depth == 0 or not board.is_playing:
-        positions = positions + 1
+        positions += 1
         return board.score
 
     # move ordering
@@ -45,7 +48,7 @@ def search(board: Board, depth: int, alpha, beta, positions: int) -> float:
     best_val = -inf
     for move in all_moves:
         move.play(board)
-        evaluation = -search(board, depth - 1, -beta, -alpha, positions)
+        evaluation = -search(board, depth - 1, -beta, -alpha)
         board.undo_move()
 
         if evaluation >= beta:
@@ -56,6 +59,8 @@ def search(board: Board, depth: int, alpha, beta, positions: int) -> float:
 
 
 def get_best_move(real_board: Board) -> Move:
+    global positions
+
     start_time = time.monotonic()
     board = deepcopy(real_board)
 
@@ -71,7 +76,7 @@ def get_best_move(real_board: Board) -> Move:
 
     for move in all_moves:
         move.play(board)
-        value = -search(board, 6, -inf, inf, positions)
+        value = -search(board, 6, -inf, inf)
         is_best_val = value >= best_val
 
         if is_best_val:
