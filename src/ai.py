@@ -77,17 +77,17 @@ def search(board: Board, depth: int, alpha, beta) -> float:
         move_score = 0
 
         weak_piece = abs(board.piece(move.start)) == 1
-        weak_on_kill_king = 6 if weak_piece else 4
+        on_kill_king = 4 if weak_piece else 2
 
         for index in move.kills:
             if abs(board.piece(index)) == 2:
-                move_score += weak_on_kill_king
+                move_score += on_kill_king
                 continue
 
             move_score += 2
 
         if move.make_king:
-            move_score += 5
+            move_score += 3
 
         return move_score
 

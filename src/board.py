@@ -250,24 +250,14 @@ class Board:
     def score(self) -> int | float:
         """Gets the Score of the Board!"""
 
-        if self.is_draw():
+        self.update_state()
+
+        if not self.is_playing:
+            if self.winner is not None:
+                return inf * self.winner
             return 0
 
-        if not self.is_playing and self.winner is not None:
-            return inf * self.winner
-
-        def piece_value(value):
-            result = abs(value[0])
-
-            if result / 2 == 1:
-                return 4
-
-            return result
-
-        red = sum(map(piece_value, filter(lambda x: x[0] < 0, self.all_pieces)))
-        blue = sum(map(piece_value, filter(lambda x: x[0] > 0, self.all_pieces)))
-
-        score = blue - red
+        score = sum(map(lambda x: x[0], filter(lambda x: x[0] != 0, self.all_pieces)))
 
         if self.current_side == PieceTypes.RED:
             score *= -1
