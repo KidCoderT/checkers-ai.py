@@ -7,21 +7,54 @@ from copy import deepcopy
 # // TODO: MOVE ORDERING
 # // TODO: CHECK HOW MANY POSITIONS EVALUATED
 # TODO: TRANSPOSITION TABLE
-# TODO: MOVE UNTIL NO CAPTURE
+# // TODO: MOVE UNTIL NO CAPTURE
 # TODO: TOWARDS THE END MOVE PIECES TO EDGES
 # TODO: OPENING
 # TODO: ITERATIVE DEEPENING
 
-positions = 0
+POSITIONS = 0
+
+
+def search_all_captures(board: Board, alpha, beta):
+    global POSITIONS
+    evaluation = board.score
+
+    if evaluation >= beta:
+        POSITIONS += 1
+        return beta
+
+    alpha = max(alpha, evaluation)
+    all_moves = generate_moves(board)
+
+    if not all_moves[0].is_killing_move:
+        POSITIONS += 1
+        return alpha
+
+    for move in all_moves:
+        move.play(board)
+        evaluation = -search_all_captures(board, -beta, -alpha)
+        board.undo_move()
+
+        if evaluation >= beta:
+            POSITIONS += 1
+            return beta
+
+        alpha = max(alpha, evaluation)
+
+    return alpha
 
 
 def search(board: Board, depth: int, alpha, beta) -> float:
-    global positions
+    global POSITIONS
     all_moves = generate_moves(board)
     board.update_state()
 
-    if depth == 0 or not board.is_playing:
-        positions += 1
+    if depth == 0:
+        POSITIONS += 1
+        return search_all_captures(board, alpha, beta)
+
+    if not board.is_playing:
+        POSITIONS += 1
         return board.score
 
     # move ordering
@@ -52,6 +85,7 @@ def search(board: Board, depth: int, alpha, beta) -> float:
         board.undo_move()
 
         if evaluation >= beta:
+            POSITIONS += 1
             return beta
 
         alpha = max(best_val, evaluation)
@@ -59,7 +93,7 @@ def search(board: Board, depth: int, alpha, beta) -> float:
 
 
 def get_best_move(real_board: Board) -> Move:
-    global positions
+    global POSITIONS
 
     start_time = time.monotonic()
     board = deepcopy(real_board)
@@ -68,7 +102,7 @@ def get_best_move(real_board: Board) -> Move:
     all_moves = generate_moves(board)
     best_move = all_moves[0]
 
-    positions = 0
+    POSITIONS = 0
 
     if len(all_moves) == 1:
         print(0)
@@ -76,7 +110,7 @@ def get_best_move(real_board: Board) -> Move:
 
     for move in all_moves:
         move.play(board)
-        value = -search(board, 6, -inf, inf)
+        value = -search(board, 10, -inf, inf)
         is_best_val = value >= best_val
 
         if is_best_val:
@@ -87,5 +121,5 @@ def get_best_move(real_board: Board) -> Move:
 
     end_time = time.monotonic()
 
-    print(end_time - start_time, positions)
+    print(end_time - start_time, POSITIONS)
     return best_move
