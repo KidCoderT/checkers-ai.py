@@ -397,10 +397,10 @@ while True:
         state_surf = TEXT_FONT.render(side, False, (0, 0, 0))
         msg_surf = TEXT_FONT.render(state_text, False, (0, 0, 0))
 
-        screen.blit(state_surf, (915, 362))
-        screen.blit(msg_surf, (915, 392))
+        screen.blit(state_surf, (915, 147))
+        screen.blit(msg_surf, (915, 177))
 
-        screen.blit(get_piece_image(game.board.winner, True), (789, 340))
+        screen.blit(get_piece_image(game.board.winner, True), (789, 125))
 
     else:
         side = "RED" if game.board.current_side == PieceTypes.RED else "BLUE"
@@ -415,12 +415,12 @@ while True:
         state_surf = TEXT_FONT.render(state_text, False, (0, 0, 0))
         msg_surf = TEXT_FONT.render(msg, False, (0, 0, 0))
 
-        screen.blit(state_surf, (915, 362))
-        screen.blit(msg_surf, (915, 392))
+        screen.blit(state_surf, (915, 147))
+        screen.blit(msg_surf, (915, 177))
 
         screen.blit(
             get_piece_image(game.board.current_side.value[0], True),
-            (789, 340),
+            (789, 125),
         )
 
     pygame.display.update()
