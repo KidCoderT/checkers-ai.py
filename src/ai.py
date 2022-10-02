@@ -7,20 +7,18 @@ from copy import deepcopy
 from .move import Move, generate_moves
 from .board import Board
 
-# // TODO: MOVE ORDERING
-# // TODO: CHECK HOW MANY POSITIONS EVALUATED
-# // TODO: MOVE UNTIL NO CAPTURE
-# // TODO: TRANSPOSITION TABLE
-# TODO: ITERATIVE DEEPENING
-
-DEPTH = 6
+DEPTH = 6  # TODO: DELETER THIS
 POSITIONS = 0
 TRANSPOSITION_TABLE = {key: {} for key in range(DEPTH)}
+# TODO: ADD ITERATIVE DEEPENING TABLE
 
 
 def search_all_captures(board: Board, alpha, beta):
+    # TODO: ADD DOCUMENTATION
     global POSITIONS
     evaluation = board.score
+
+    # TODO: IF TIME LIMIT REACHED END PROCESS
 
     if evaluation >= beta:
         POSITIONS += 1
@@ -55,6 +53,8 @@ def search(board: Board, depth: int, alpha, beta) -> float:
     all_moves = generate_moves(board)
     board.update_state()
 
+    # TODO: IF TIME LIMIT REACHED END PROCESS
+
     key = board.hash()
 
     if key in TRANSPOSITION_TABLE[depth]:
@@ -72,6 +72,9 @@ def search(board: Board, depth: int, alpha, beta) -> float:
         TRANSPOSITION_TABLE[depth][key] = score
         return score
 
+    # TODO: CHECK IF DEPTH SEEN BEFORE
+    # ? - if so then use that
+    # ? - otherwise get moves and do move_ordering
     # move ordering
     def score_move(move: Move):
         move_score = 0
@@ -93,6 +96,8 @@ def search(board: Board, depth: int, alpha, beta) -> float:
 
     all_moves.sort(key=score_move)
 
+    # TODO: SAVE SCORE OF ALL THE MOVES
+
     best_val = -inf
     for move in all_moves:
         move.play(board)
@@ -105,9 +110,31 @@ def search(board: Board, depth: int, alpha, beta) -> float:
             return beta
 
         alpha = max(best_val, evaluation)
+
+    # TODO: SORT THE MOVES BASED ON THE SCORES
+    # TODO: SET THAT AS THE DEPTH SCORE
+
     return alpha
 
 
+# TODO: CREATE ITERATIVE DEEPENING FUNC (board, time limit)
+# - while time limit not passed
+# -     search to new depth
+# -     if score of new_depth found win return
+# -     if time limit not passed:
+#           - set new depth, add new position no. & set new score
+# -     else: break
+# -     depth ++
+# - return score, depth, position no.
+
+# TODO: RENAME TO SEARCH_BEST_MOVE
+# - calculate time to give each move
+# - for move in possible_move
+# -     do iterative search for the move
+# -     if score > best_score:
+# -         best_score = score
+# -         best_move = move
+# - return best move, positions_searched, evals_made
 def get_best_move(real_board: Board) -> Move:
     global POSITIONS, TRANSPOSITION_TABLE
 
