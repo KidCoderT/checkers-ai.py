@@ -4,7 +4,7 @@ from typing import Optional
 
 from .board import Board, PieceTypes
 from .move import Move, generate_moves
-from .ai import get_best_move
+from .ai import search_best_move
 
 
 class Game:
@@ -19,11 +19,15 @@ class Game:
 
         self.should_inverse_board = blue is None and red is not None
         self.player_is_there = blue is not None or red is not None
+        self.comp_is_playing = False
 
         self.red = red
         self.blue = blue
 
-        self.comp_is_playing = False
+        # TODO: ADD FOLOWING VARIABLES
+        # * - depth searched
+        # * - time_taken
+        # * - positions evaluated and found
 
     def make_comp_play(self):
         # TODO: ADD DOCUMENTATION
@@ -33,7 +37,7 @@ class Game:
         time.sleep(0.2)
         # random.choice(self.moves).play(self.board)
         # TODO: CHANGE TO SEARCH BEST MOVE & PASS TIME
-        get_best_move(self.board).play(self.board)
+        search_best_move(self.board).play(self.board)
         self.reset_correct_moves()
         self.board.update_state()
 

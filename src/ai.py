@@ -7,18 +7,33 @@ from copy import deepcopy
 from .move import Move, generate_moves
 from .board import Board
 
-DEPTH = 6  # TODO: DELETER THIS
 POSITIONS = 0
-TRANSPOSITION_TABLE = {key: {} for key in range(DEPTH)}
-# TODO: ADD ITERATIVE DEEPENING TABLE
+TRANSPOSITION_TABLE = {}
+ITERATIVE_DEEPENING_TABLE = {}
+WIN_CUT_OFF = 10000000
+SHOULD_CUT_OFF = False
 
 
-def search_all_captures(board: Board, alpha, beta):
-    # TODO: ADD DOCUMENTATION
-    global POSITIONS
+def search_all_captures(board: Board, alpha, beta, start_time, time_limit):
+    """Search all captures until no more captures are
+    possible. this allows more accurate score checking
+
+    Args:
+        board (Board): the board
+        alpha (_type_): the highest value
+        beta (_type_): the worst values
+        start_time (_type_): the start_time
+        time_limit (_type_): the time limit for the search
+
+    Returns:
+        _type_: the score
+    """
+    global POSITIONS, SHOULD_CUT_OFF
     evaluation = board.score
 
-    # TODO: IF TIME LIMIT REACHED END PROCESS
+    if time.monotonic() - start_time > time_limit:
+        SHOULD_CUT_OFF = True
+        return 0
 
     if evaluation >= beta:
         POSITIONS += 1
@@ -36,7 +51,7 @@ def search_all_captures(board: Board, alpha, beta):
 
     for move in all_moves:
         move.play(board)
-        evaluation = -search_all_captures(board, -beta, -alpha)
+        evaluation = -search_all_captures(board, -beta, -alpha, start_time, time_limit)
         board.undo_move()
 
         if evaluation >= beta:
@@ -48,12 +63,13 @@ def search_all_captures(board: Board, alpha, beta):
     return alpha
 
 
-def search(board: Board, depth: int, alpha, beta) -> float:
-    global POSITIONS, TRANSPOSITION_TABLE
-    all_moves = generate_moves(board)
+def search(board: Board, depth: int, alpha, beta, start_time, time_limit) -> float:
+    global POSITIONS, TRANSPOSITION_TABLE, SHOULD_CUT_OFF, ITERATIVE_DEEPENING_TABLE
     board.update_state()
 
-    # TODO: IF TIME LIMIT REACHED END PROCESS
+    if time.monotonic() - start_time > time_limit:
+        SHOULD_CUT_OFF = True
+        return 0
 
     key = board.hash()
 
@@ -62,7 +78,7 @@ def search(board: Board, depth: int, alpha, beta) -> float:
 
     if depth == 0:
         POSITIONS += 1
-        score = search_all_captures(board, alpha, beta)
+        score = search_all_captures(board, alpha, beta, start_time, time_limit)
         TRANSPOSITION_TABLE[depth][key] = score
         return score
 
@@ -72,36 +88,51 @@ def search(board: Board, depth: int, alpha, beta) -> float:
         TRANSPOSITION_TABLE[depth][key] = score
         return score
 
-    # TODO: CHECK IF DEPTH SEEN BEFORE
-    # ? - if so then use that
-    # ? - otherwise get moves and do move_ordering
-    # move ordering
-    def score_move(move: Move):
-        move_score = 0
+    try:
+        # check if depth present
+        ITERATIVE_DEEPENING_TABLE[depth]
+    except KeyError:
+        # the depth is not there sc create it
+        ITERATIVE_DEEPENING_TABLE[depth] = []
+    finally:
+        all_moves = []
 
-        weak_piece = abs(board.piece(move.start)) == 1
-        on_kill_king = 4 if weak_piece else 2
+        if len(ITERATIVE_DEEPENING_TABLE[depth]) > 0:
+            all_moves = ITERATIVE_DEEPENING_TABLE[depth]
 
-        for index in move.kills:
-            if abs(board.piece(index)) == 2:
-                move_score += on_kill_king
-                continue
+        else:
+            all_moves = generate_moves(board)
 
-            move_score += 2
+            def score_move(move: Move):
+                move_score = 0
 
-        if move.make_king:
-            move_score += 3
+                weak_piece = abs(board.piece(move.start)) == 1
+                on_kill_king = 4 if weak_piece else 2
 
-        return move_score
+                for index in move.kills:
+                    if abs(board.piece(index)) == 2:
+                        move_score += on_kill_king
+                        continue
 
-    all_moves.sort(key=score_move)
+                    move_score += 2
 
-    # TODO: SAVE SCORE OF ALL THE MOVES
+                if move.make_king:
+                    move_score += 3
+
+                return move_score
+
+            all_moves.sort(key=score_move)
+
+    moves_score = []
 
     best_val = -inf
     for move in all_moves:
         move.play(board)
-        evaluation = -search(board, depth - 1, -beta, -alpha)
+        evaluation = -search(board, depth - 1, -beta, -alpha, start_time, time_limit)
+
+        # add the evaluation score
+        moves_score.append(evaluation)
+
         board.undo_move()
 
         if evaluation >= beta:
@@ -111,59 +142,116 @@ def search(board: Board, depth: int, alpha, beta) -> float:
 
         alpha = max(best_val, evaluation)
 
-    # TODO: SORT THE MOVES BASED ON THE SCORES
-    # TODO: SET THAT AS THE DEPTH SCORE
+    arranged_moves = list(
+        map(lambda x: x[0], sorted(zip(all_moves, moves_score), key=lambda x: x[1]))
+    )
+    ITERATIVE_DEEPENING_TABLE[depth] = arranged_moves
 
     return alpha
 
 
-# TODO: CREATE ITERATIVE DEEPENING FUNC (board, time limit)
-# - while time limit not passed
-# -     search to new depth
-# -     if score of new_depth found win return
-# -     if time limit not passed:
-#           - set new depth, add new position no. & set new score
-# -     else: break
-# -     depth ++
-# - return score, depth, position no.
+#  DONE -TODO: CREATE ITERATIVE DEEPENING FUNC (board, time limit)
+def iterative_deepening(board: Board, time_limit: float) -> tuple[float, float]:
+    """This is the Function that using iterative_deepening
+    searches as far as possible into each and every move based
+    on the given time limit
 
-# TODO: RENAME TO SEARCH_BEST_MOVE
-# - calculate time to give each move
-# - for move in possible_move
-# -     do iterative search for the move
-# -     if score > best_score:
-# -         best_score = score
-# -         best_move = move
-# - return best move, positions_searched, evals_made
-def get_best_move(real_board: Board) -> Move:
-    global POSITIONS, TRANSPOSITION_TABLE
+    Args:
+        board (Board): the board
+        time_limit (float): the time limit for the search
+
+    Returns:
+        tuple[float, float]: score, depth searched
+    """
+    global SHOULD_CUT_OFF, TRANSPOSITION_TABLE, ITERATIVE_DEEPENING_TABLE
 
     start_time = time.monotonic()
-    board = deepcopy(real_board)
+    SHOULD_CUT_OFF = False
+    depth = 1
+    score = 0
 
-    best_val = -inf
-    all_moves = generate_moves(board)
+    # should reset for every search
+    ITERATIVE_DEEPENING_TABLE = {}
+
+    while not SHOULD_CUT_OFF:
+        # cut of if time passed
+        if time.monotonic() - start_time > time_limit:
+            SHOULD_CUT_OFF = True
+            continue
+
+        # resting transpositionTable for every depth
+        TRANSPOSITION_TABLE = {key: {} for key in range(depth + 1)}
+        search_score = search(board, depth, -inf, inf, start_time, time_limit)
+
+        # cut of if found winning move
+        if search_score >= 50000000:
+            return search_score, depth
+
+        if not SHOULD_CUT_OFF:
+            score = search_score
+
+        # update the depth for the next search
+        depth += 1
+
+        # update iterative_deepening table
+        ITERATIVE_DEEPENING_TABLE = {
+            key + 1: value for (key, value) in ITERATIVE_DEEPENING_TABLE.items()
+        }
+        print(ITERATIVE_DEEPENING_TABLE)
+
+    return score, depth - 1
+
+
+def search_best_move(real_board: Board, wait_time: int) -> tuple[Move, float, float]:
+    """This is the high level function that when given
+    a board and the time limit it can search
+    using iterative deepening it searches for it until
+    the given time limit is reached after which it returns
+    the best move.
+
+    Args:
+        real_board (Board): the board to search the best move
+        wait_time (int): the wait time the ai can afford
+
+    Returns:
+        tuple[Move, int, int]: best move, positions checked, max depth
+    """
+    global POSITIONS, TRANSPOSITION_TABLE
+
+    best_score = -inf
+    all_moves = generate_moves(real_board)
     best_move = all_moves[0]
 
-    POSITIONS = 0
-    TRANSPOSITION_TABLE = {key: {} for key in range(DEPTH + 1)}
+    if len(all_moves) == 1:  # killing move only
+        return best_move, 0, 0
 
-    if len(all_moves) == 1:
-        print(0)
-        return best_move
+    POSITIONS = 0
+    positions = 0
+    depth = 1
+
+    # calculating time for searching each move
+    search_time_limit = wait_time / len(all_moves)
 
     for move in all_moves:
-        move.play(board)
-        value = -search(board, DEPTH, -inf, inf)
-        is_best_val = value >= best_val
+        board = deepcopy(real_board)
 
-        if is_best_val:
-            best_val = value
-            best_move = move
+        move.play(board)
+        search_score, search_depth = iterative_deepening(board, search_time_limit)
+
+        # found win move
+        if search_score >= WIN_CUT_OFF:
+            return best_move, depth, positions
+
+        is_best_score = search_score >= best_score
+
+        # update values if is the best score
+        if is_best_score:
+            best_score = search_score
+
+        depth = max(search_depth, depth)
+        positions = POSITIONS
+        best_move = move
 
         board.undo_move()
 
-    end_time = time.monotonic()
-
-    print(end_time - start_time, POSITIONS)
-    return best_move
+    return best_move, positions, depth

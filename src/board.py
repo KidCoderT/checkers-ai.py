@@ -24,11 +24,6 @@ class Board:
         self.winner: None | int = None
         self.moves_without_kills = 0
 
-        # TODO: ADD FOLOWING VARIABLES
-        # * - depth searched
-        # * - time_taken
-        # * - positions evaluated and found
-
     def reset(self):
         """Resets the Board to the initial state"""
         self.__default_arrange_pieces()
@@ -38,8 +33,6 @@ class Board:
         self.is_playing = True
         self.winner: None | int = None
         self.moves_without_kills = 0
-
-        # TODO: UPDATE EVERYTHING
 
     @property
     def all_pieces(self):

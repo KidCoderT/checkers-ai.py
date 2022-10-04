@@ -10,9 +10,6 @@ from settings import BOARD_SIZE, BOARD_OFFSET, BOARD_BORDER_THICKNESS, CELL_SIZE
 from particles import SparksContainer
 from button import Button
 
-# TODO: MAKE CLICK AND SHOW MOVES
-#   -- REMOVE DRAG & DROP
-
 num_pass, num_fail = pygame.init()
 
 if num_fail > 0:
