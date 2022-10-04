@@ -6,6 +6,8 @@ from .board import Board, PieceTypes
 from .move import Move, generate_moves
 from .ai import search_best_move
 
+TIME_LIMIT_FOR_SEARCH = 8
+
 
 class Game:
     """The Game class for a checkers game
@@ -31,19 +33,21 @@ class Game:
 
     def make_comp_play(self):
         # TODO: ADD DOCUMENTATION
-        # TODO: CHECK TIME TAKEN TO COMPLETE FUNC
+        start_time = time.monotonic()
         self.comp_is_playing = True
 
-        time.sleep(0.2)
-        # random.choice(self.moves).play(self.board)
-        # TODO: CHANGE TO SEARCH BEST MOVE & PASS TIME
-        search_best_move(self.board).play(self.board)
+        move, positions_checked, max_depth_searched = search_best_move(
+            self.board, TIME_LIMIT_FOR_SEARCH
+        )
+        move.play(self.board)
         self.reset_correct_moves()
         self.board.update_state()
 
         self.comp_is_playing = False
         self.update_game()
 
+        time_taken = time.monotonic() - start_time
+        print(positions_checked, max_depth_searched, round(time_taken, 2))
         # TODO: SET THE TIME TAKEN AND NEW VALUES ONCE RETRIEVED
 
     def update_game(self, move: Optional[Move] = None):

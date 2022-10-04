@@ -1,3 +1,6 @@
+"""Contains the Board class
+"""
+
 from math import inf
 import numpy as np
 from .move import generate_sliding_moves, generate_attacking_moves
@@ -13,6 +16,7 @@ class Board:
         if board is None:
             self.__board = np.zeros(64, dtype=np.dtype(int))
             self.__default_arrange_pieces()
+            self.board__ = self.__board.copy()
 
         else:
             self.__board = np.array(board, dtype=np.dtype(int))
@@ -86,7 +90,7 @@ class Board:
 
     @property
     def last_move(self) -> list | None:
-        """Gives u the last move made and if its the beggining of the game
+        """Gives u the last move made and if its the beginning of the game
         then it returns None
 
         Returns:
@@ -96,7 +100,7 @@ class Board:
 
     def get_notation(self, index: int) -> int | None:
         """Gets the notation for a move on the board
-        this can also be used to validate wheter a move is valid
+        this can also be used to validate whether a move is valid
         or not!
         Args:
             index (int): the position to get the notation for
@@ -250,8 +254,8 @@ class Board:
     def score(self) -> int | float:
         """Gets the Score of the Board!"""
 
-        # TODO: FIX SCORE
-        # * IF WINNING GIVE INF
+        # * IF WINNING GIVE +INF
+        # * IF LOSING GIVE -INF
         # * IF DRAW GIVE 0
 
         # * SUM THE WHOLE BOARD * 2 * ENDGAME_WEIGHT
@@ -259,16 +263,72 @@ class Board:
         # * TOWARDS THE END FORCE OPPONENTS TO EDGES
         # * TOWARDS THE END FORCE MYSELF TO CENTER
 
-        # * IF CURRENT IS RED: SCORE *= -1
-
         self.update_state()
+
+        opponent = (
+            PieceTypes.RED if self.current_side == PieceTypes.BLUE else PieceTypes.BLUE
+        )
 
         if not self.is_playing:
             if self.winner is not None:
-                return inf * self.winner
+                # opponent won
+                if self.winner in opponent.value:
+                    return -inf
+
+                # I won
+                return inf
+
+            # if it a draw
             return 0
 
-        score = sum(map(lambda x: x[0], filter(lambda x: x[0] != 0, self.all_pieces)))
+        # ! score = for blue by default
+        # ! for red = score * -1
+
+        # increases the longer the game last and the fewer the pieces left
+        no_to_ignore = 20
+        no_of_pieces = np.where(self.__board != 0)[0].size
+        endgame_weight = (24 - no_of_pieces) * 0.5 + (
+            max(len(self.__made_moves), no_to_ignore) - no_to_ignore
+        )
+
+        # the more pieces we have compared to the opponent the better
+        score = sum(self.board) * 2 * endgame_weight
+
+        # the more moves possible the better especially kinging & multi kills
+        # towards end force my pieces to the center and opponent to edges
+        for (piece, start) in self.all_pieces:
+            piece_score = 0
+
+            # more moves & kills the better
+
+            all_moves = generate_sliding_moves(
+                piece, start, self.board
+            ) + generate_attacking_moves(piece, start, self.board)
+
+            for move in all_moves:
+                piece_score += 3 * len(move.kills)  # if no kills += 0
+                piece_score += 2
+
+                if move.make_king:
+                    # making king good
+                    piece_score += 5
+
+            # force to the edges & center
+
+            file = start % 8
+            rank = start // 8
+            dist_from_center = (
+                (max(3 - file, file - 4) + max(3 - rank, rank - 4))
+                * 0.5
+                * endgame_weight
+            )
+
+            if piece in PieceTypes.BLUE.value:
+                score += piece_score
+                score -= dist_from_center
+            else:
+                score -= piece_score
+                score += dist_from_center
 
         if self.current_side == PieceTypes.RED:
             score *= -1
@@ -303,5 +363,7 @@ class Board:
             self.is_playing = False
 
     def hash(self):
-        # TODO: ADD DOCUMENTATION
+        """Hashes the board but tbh
+        just gets the string representation
+        of the board as a list"""
         return str(self.board)

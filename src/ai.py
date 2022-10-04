@@ -1,4 +1,4 @@
-# pylint: disable=global-statement
+# pylint: disable=global-statement, global-variable-not-assigned
 
 import time
 from math import inf
@@ -95,6 +95,7 @@ def search(board: Board, depth: int, alpha, beta, start_time, time_limit) -> flo
         # the depth is not there sc create it
         ITERATIVE_DEEPENING_TABLE[depth] = []
     finally:
+        # FIXME
         all_moves = []
 
         if len(ITERATIVE_DEEPENING_TABLE[depth]) > 0:
