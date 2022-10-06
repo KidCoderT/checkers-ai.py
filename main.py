@@ -5,7 +5,6 @@ import random
 import pygame
 import time
 import asyncio
-import kct_pygame_tools as kpt
 from src.game import Game, PieceTypes
 
 from settings import (
@@ -76,17 +75,37 @@ pygame.draw.rect(
 info_box = pygame.image.load("./assets/images/info_section.png")
 background.blit(info_box, info_box_rect.topleft)
 
+
+def load_and_scale(filename: str, scale_factor: float, alpha: int = 255):
+    """Easy way to load and scale an image
+
+    Args:
+        filename (str): the image link
+        scale_factor (float): the factor to scale by
+        alpha (int, optional): sets the alpha value. Defaults to 255.
+
+    Returns:
+        img_surface: the image
+    """
+    img = pygame.image.load(filename)
+    size = round(img.get_width() * scale_factor), round(img.get_height() * scale_factor)
+    img = pygame.transform.scale(img, size)
+    img.set_alpha(alpha)
+
+    return img
+
+
 PIECES_SCALE_FACTOR = 0.4
-RED_PIECE = kpt.load_and_scale("./assets/images/red.png", PIECES_SCALE_FACTOR)
-BLUE_PIECE = kpt.load_and_scale("./assets/images/blue.png", PIECES_SCALE_FACTOR)
+RED_PIECE = load_and_scale("./assets/images/red.png", PIECES_SCALE_FACTOR)
+BLUE_PIECE = load_and_scale("./assets/images/blue.png", PIECES_SCALE_FACTOR)
 
-RED_INFO_PIECE = kpt.load_and_scale("./assets/images/red.png", 0.76)
-BLUE_INFO_PIECE = kpt.load_and_scale("./assets/images/blue.png", 0.76)
-DRAW_INFO_PIECE = kpt.load_and_scale("./assets/images/grey.png", 0.76)
+RED_INFO_PIECE = load_and_scale("./assets/images/red.png", 0.76)
+BLUE_INFO_PIECE = load_and_scale("./assets/images/blue.png", 0.76)
+DRAW_INFO_PIECE = load_and_scale("./assets/images/grey.png", 0.76)
 
-RED_WIN_BANNER = kpt.load_and_scale("./assets/images/Red Banner.png", 1)
-BLUE_WIN_BANNER = kpt.load_and_scale("./assets/images/Blue Banner.png", 1)
-DRAW_BANNER = kpt.load_and_scale("./assets/images/Draw Banner.png", 1)
+RED_WIN_BANNER = load_and_scale("./assets/images/Red Banner.png", 1)
+BLUE_WIN_BANNER = load_and_scale("./assets/images/Blue Banner.png", 1)
+DRAW_BANNER = load_and_scale("./assets/images/Draw Banner.png", 1)
 
 MOVE_SQUARE = pygame.Surface((CELL_SIZE, CELL_SIZE))
 MOVE_SQUARE.fill((255, 255, 255))
