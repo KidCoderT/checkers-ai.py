@@ -79,10 +79,13 @@ class Game:
             and self.board.is_playing
             and not self.comp_is_playing
         ):
-            comp = threading.Thread(target=self.make_comp_play)
-            comp.daemon = True
-            self.process.append(comp)
-            comp.start()
+            if 0:
+                comp = threading.Thread(target=self.make_comp_play)
+                comp.daemon = True
+                self.process.append(comp)
+                comp.start()
+            else:
+                self.make_comp_play()
 
     def find_move(self, start: int, end: int) -> Move:
         """Find the index for the  move based on the start and end
