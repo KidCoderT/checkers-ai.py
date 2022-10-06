@@ -3,10 +3,17 @@
 import sys
 import random
 import pygame
+import time
 import kct_pygame_tools as kpt
 from src.game import Game, PieceTypes
 
-from settings import BOARD_SIZE, BOARD_OFFSET, BOARD_BORDER_THICKNESS, CELL_SIZE
+from settings import (
+    BOARD_SIZE,
+    BOARD_OFFSET,
+    BOARD_BORDER_THICKNESS,
+    CELL_SIZE,
+    TIME_ROUND_OFF,
+)
 from particles import SparksContainer
 from button import Button
 
@@ -122,8 +129,8 @@ def get_position(
     index: int, inverse_diff: int, offset: float = 0.0
 ) -> tuple[float, float]:
     """Following the Dry method this function takes
-    in the index and returns the position of whetever
-    item.
+    in the index and returns the position from that index
+    for the item to use as x & y.
 
     Args:
         index (int): the index of the item
@@ -175,6 +182,11 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+
+        # ! For debuging
+        # if event.type == pygame.KEYDOWN:
+        #     print(game.board.score)
+        #     print()
 
         if game.board.is_playing and event.type == pygame.MOUSEBUTTONDOWN:
             x = mx - BOARD_OFFSET
@@ -253,14 +265,13 @@ while True:
                 active_index = None
 
     last_move = game.board.last_move
-    pieces = game.board.all_pieces
 
     if last_move is not None:
         for index in last_move[:2]:  # type: ignore
             x, y = get_position(index, 7)
             screen.blit(MOVE_SQUARE, (x, y))
 
-    for (piece, index) in pieces:
+    for (piece, index) in game.board.all_pieces:
         if index == active_index:
             continue
 
@@ -419,6 +430,24 @@ while True:
             get_piece_image(game.board.current_side.value[0], True),
             (789, 125),
         )
+
+    time_taken = str(
+        round(time.monotonic() - game.start_time, TIME_ROUND_OFF)
+        if game.comp_is_playing
+        else round(game.ai_time, TIME_ROUND_OFF)
+    )
+
+    depth_surf = TEXT_FONT.render(str(game.depth_searched), False, (0, 0, 0))
+    positions_surf = TEXT_FONT.render(
+        str(game.positions_evaluated) if not game.comp_is_playing else "...",
+        False,
+        (0, 0, 0),
+    )
+    time_surf = TEXT_FONT.render(time_taken, False, (0, 0, 0))
+
+    screen.blit(depth_surf, (1105, 299))
+    screen.blit(positions_surf, (1100, 373))
+    screen.blit(time_surf, (1105, 417))
 
     pygame.display.update()
     clock.tick(60)

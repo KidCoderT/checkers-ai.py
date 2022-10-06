@@ -1,3 +1,7 @@
+"""Contains all the methods and functions
+& variables to make the ai play its moves
+"""
+
 # pylint: disable=global-statement, global-variable-not-assigned
 
 import time
@@ -98,31 +102,31 @@ def search(board: Board, depth: int, alpha, beta, start_time, time_limit) -> flo
         # FIXME
         all_moves = []
 
-        if len(ITERATIVE_DEEPENING_TABLE[depth]) > 0:
-            all_moves = ITERATIVE_DEEPENING_TABLE[depth]
+        # if len(ITERATIVE_DEEPENING_TABLE[depth]) > 0:
+        #     all_moves = ITERATIVE_DEEPENING_TABLE[depth]
 
-        else:
-            all_moves = generate_moves(board)
+        # else:
+        all_moves = generate_moves(board)
 
-            def score_move(move: Move):
-                move_score = 0
+        def score_move(move: Move):
+            move_score = 0
 
-                weak_piece = abs(board.piece(move.start)) == 1
-                on_kill_king = 4 if weak_piece else 2
+            weak_piece = abs(board.piece(move.start)) == 1
+            on_kill_king = 4 if weak_piece else 2
 
-                for index in move.kills:
-                    if abs(board.piece(index)) == 2:
-                        move_score += on_kill_king
-                        continue
+            for index in move.kills:
+                if abs(board.piece(index)) == 2:
+                    move_score += on_kill_king
+                    continue
 
-                    move_score += 2
+                move_score += 2
 
-                if move.make_king:
-                    move_score += 3
+            if move.make_king:
+                move_score += 3
 
-                return move_score
+            return move_score
 
-            all_moves.sort(key=score_move)
+        all_moves.sort(key=score_move)
 
     moves_score = []
 
@@ -182,7 +186,7 @@ def iterative_deepening(board: Board, time_limit: float) -> tuple[float, float]:
 
         # resting transpositionTable for every depth
         TRANSPOSITION_TABLE = {key: {} for key in range(depth + 1)}
-        search_score = search(board, depth, -inf, inf, start_time, time_limit)
+        search_score = -search(board, depth, -inf, inf, start_time, time_limit)
 
         # cut of if found winning move
         if search_score >= 50000000:
@@ -198,7 +202,7 @@ def iterative_deepening(board: Board, time_limit: float) -> tuple[float, float]:
         ITERATIVE_DEEPENING_TABLE = {
             key + 1: value for (key, value) in ITERATIVE_DEEPENING_TABLE.items()
         }
-        print(ITERATIVE_DEEPENING_TABLE)
+        # print(ITERATIVE_DEEPENING_TABLE.keys())
 
     return score, depth - 1
 

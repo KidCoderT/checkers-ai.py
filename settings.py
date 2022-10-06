@@ -23,3 +23,5 @@ for row in range(8):
         )
 
         del index
+
+TIME_ROUND_OFF = 3

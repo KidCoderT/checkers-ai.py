@@ -16,7 +16,6 @@ class Board:
         if board is None:
             self.__board = np.zeros(64, dtype=np.dtype(int))
             self.__default_arrange_pieces()
-            self.board__ = self.__board.copy()
 
         else:
             self.__board = np.array(board, dtype=np.dtype(int))
@@ -250,6 +249,10 @@ class Board:
 
         return is_draw
 
+    def clear(self):
+        """Clears the board and makes it empty."""
+        self.__board = np.zeros(64, dtype=np.dtype(int))
+
     @property
     def score(self) -> int | float:
         """Gets the Score of the Board!"""
@@ -258,10 +261,15 @@ class Board:
         # * IF LOSING GIVE -INF
         # * IF DRAW GIVE 0
 
-        # * SUM THE WHOLE BOARD * 2 * ENDGAME_WEIGHT
-        # * LEN ( BLUE MOVES ) - LEN ( RED MOVES )
-        # * TOWARDS THE END FORCE OPPONENTS TO EDGES
-        # * TOWARDS THE END FORCE MYSELF TO CENTER
+        # * pawn = 1
+        # * king = 3
+        # * protected piece = 4
+        # * move piece close to center
+        # * make piece king fast
+
+        def endgame_weight(materials: int):
+            multiplier = 1 / 12
+            return 1 - min(1, materials * multiplier)
 
         self.update_state()
 
@@ -286,13 +294,13 @@ class Board:
 
         # increases the longer the game last and the fewer the pieces left
         no_to_ignore = 20
-        no_of_pieces = np.where(self.__board != 0)[0].size
-        endgame_weight = (24 - no_of_pieces) * 0.5 + (
-            max(len(self.__made_moves), no_to_ignore) - no_to_ignore
-        )
+        no_of_pieces = np.where(
+            self.__board > 0 if opponent == PieceTypes.RED else self.__board < 0
+        )[0].size
+        weight = endgame_weight(no_of_pieces)
 
         # the more pieces we have compared to the opponent the better
-        score = sum(self.board) * 2 * endgame_weight
+        score = sum(self.board) * 2 * weight
 
         # the more moves possible the better especially kinging & multi kills
         # towards end force my pieces to the center and opponent to edges
@@ -318,17 +326,15 @@ class Board:
             file = start % 8
             rank = start // 8
             dist_from_center = (
-                (max(3 - file, file - 4) + max(3 - rank, rank - 4))
-                * 0.5
-                * endgame_weight
+                (max(3 - file, file - 4) + max(3 - rank, rank - 4)) * 0.5 * weight
             )
+
+            piece_score -= dist_from_center
 
             if piece in PieceTypes.BLUE.value:
                 score += piece_score
-                score -= dist_from_center
             else:
                 score -= piece_score
-                score += dist_from_center
 
         if self.current_side == PieceTypes.RED:
             score *= -1
@@ -344,7 +350,6 @@ class Board:
         if is_draw:
             return
 
-        is_moves_possible = False
         pieces = self.all_pieces
         board = self.board  # type: ignore
 
@@ -354,11 +359,10 @@ class Board:
                 piece_attack_moves = generate_attacking_moves(piece, start, board)
                 piece_sliding_moves = generate_sliding_moves(piece, start, board)
 
-                if len(piece_attack_moves) > 0 or len(piece_sliding_moves) > 0:
-                    is_moves_possible = True
+                if len(piece_attack_moves + piece_sliding_moves) > 0:
                     break
 
-        if not is_moves_possible:
+        else:
             self.winner = self.current_side.value[0] * -1
             self.is_playing = False
 
