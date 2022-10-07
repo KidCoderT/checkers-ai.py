@@ -1,8 +1,8 @@
 """Contains the Board class
 """
 
-from math import inf
 import numpy as np
+from math import inf
 from .move import generate_sliding_moves, generate_attacking_moves
 from .utils import PieceTypes, POSITION_NOTATIONS
 

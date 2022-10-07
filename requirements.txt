@@ -21,7 +21,7 @@ lazy-object-proxy==1.7.1
 MarkupSafe==2.1.1
 mccabe==0.7.0
 mypy-extensions==0.4.3
-numpy==1.23.2
+numpy==1.23.3
 packaging==21.3
 pathspec==0.10.1
 pep8==1.7.1
@@ -30,7 +30,6 @@ platformdirs==2.5.2
 pluggy==1.0.0
 priority==2.0.0
 py==1.11.0
-Pybag==2.2.5
 pygame==2.1.2
 pygbag==0.3.2
 pylint==2.15.2
