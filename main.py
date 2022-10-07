@@ -1,5 +1,6 @@
 # pylint: disable=no-member, not-an-iterable, invalid-name, unsubscriptable-object, redefined-outer-name, global-variable-not-assigned
 
+import PIL, numpy
 import sys
 import random
 import pygame
@@ -174,6 +175,7 @@ def get_position(
 
 
 async def main():
+
     clock = pygame.time.Clock()
     active_index: int | None = None
     active_piece: int = 0
@@ -481,5 +483,5 @@ async def main():
         await asyncio.sleep(0)
         clock.tick(60)
 
-
+print("start game")
 asyncio.run(main())
